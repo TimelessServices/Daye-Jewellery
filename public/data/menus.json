@@ -1,0 +1,199 @@
+{
+  "mainNavigation": [
+    {
+      "id": "collections",
+      "title": "Our Collections", 
+      "link": "/shop",
+      "hasSubmenu": true,
+      "submenu": []
+    },
+    {
+      "id": "best-sellers",
+      "title": "Best Sellers",
+      "link": "/shop", 
+      "hasSubmenu": true,
+      "action": {
+        "type": "filter",
+        "method": "navigateWithFilters",
+        "params": { "sort": "bestsellers" }
+      },
+      "submenu": [
+        {
+          "id": "top-necklaces",
+          "title": "Top Necklaces",
+          "description": "Our most loved necklace designs",
+          "link": "/shop",
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters",
+            "params": { "types": ["Necklace"], "sort": "bestsellers" }
+          }
+        },
+        {
+          "id": "popular-rings", 
+          "title": "Popular Rings",
+          "description": "Customer favorite rings",
+          "link": "/shop",
+          "action": {
+            "type": "filter", 
+            "method": "navigateWithFilters",
+            "params": { "types": ["Ring"], "sort": "bestsellers" }
+          }
+        },
+        {
+          "id": "trending-earrings",
+          "title": "Trending Earrings", 
+          "description": "Earrings everyone's talking about",
+          "link": "/shop",
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters", 
+            "params": { "types": ["Earring"], "sort": "trending" }
+          }
+        },
+        {
+          "id": "bestseller-bracelets",
+          "title": "Bestseller Bracelets",
+          "description": "Most purchased bracelet styles",
+          "link": "/shop",
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters",
+            "params": { "types": ["Bracelet"], "sort": "bestsellers" }
+          }
+        },
+        {
+          "id": "customer-favorites",
+          "title": "Customer Favorites",
+          "description": "Highest rated pieces", 
+          "link": "/shop",
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters",
+            "params": { "sort": "rating" }
+          }
+        },
+        {
+          "id": "most-gifted",
+          "title": "Most Gifted",
+          "description": "Perfect for giving to someone special",
+          "link": "/shop", 
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters",
+            "params": { "tags": ["gift"], "sort": "popularity" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "all-jewellery", 
+      "title": "All Jewellery",
+      "link": "/shop",
+      "hasSubmenu": true,
+      "action": {
+        "type": "filter",
+        "method": "navigateWithFilters", 
+        "params": { "types": ["Necklace", "Bracelet", "Ring", "Earring"] }
+      },
+      "submenu": [
+        {
+          "id": "necklaces",
+          "title": "Necklaces",
+          "description": "Chains, pendants, and chokers",
+          "link": "/shop",
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters",
+            "params": { "types": ["Necklace"] }
+          }
+        },
+        {
+          "id": "rings",
+          "title": "Rings", 
+          "description": "Statement rings, bands, and stacking rings",
+          "link": "/shop",
+          "action": {
+            "type": "filter", 
+            "method": "navigateWithFilters",
+            "params": { "types": ["Ring"] }
+          }
+        },
+        {
+          "id": "earrings",
+          "title": "Earrings",
+          "description": "Studs, hoops, drops, and climbers", 
+          "link": "/shop",
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters",
+            "params": { "types": ["Earring"] }
+          }
+        },
+        {
+          "id": "bracelets",
+          "title": "Bracelets",
+          "description": "Chains, cuffs, and charm bracelets",
+          "link": "/shop",
+          "action": {
+            "type": "filter",
+            "method": "navigateWithFilters", 
+            "params": { "types": ["Bracelet"] }
+          }
+        }
+      ]
+    },
+    {
+      "id": "on-sale",
+      "title": "On Sale",
+      "link": "/shop",
+      "hasSubmenu": false,
+      "action": {
+        "type": "filter", 
+        "method": "navigateWithFilters",
+        "params": { "onSale": true }
+      }
+    }
+  ],
+  "mobileQuickLinks": [
+    {
+      "id": "new-arrivals",
+      "title": "New Arrivals", 
+      "link": "/shop",
+      "action": {
+        "type": "filter",
+        "method": "navigateWithFilters",
+        "params": { "sort": "newest" }
+      }
+    },
+    {
+      "id": "under-50",
+      "title": "Under $50",
+      "link": "/shop",
+      "action": {
+        "type": "filter",
+        "method": "navigateWithFilters", 
+        "params": { "price": { "min": 0, "max": 50 } }
+      }
+    },
+    {
+      "id": "browse-collections",
+      "title": "Browse Collections",
+      "link": "/shop",
+      "action": {
+        "type": "collection_browse",
+        "method": "showCollectionScroller"
+      }
+    },
+    {
+      "id": "care-guide", 
+      "title": "Care Guide",
+      "link": "/care-guide"
+    },
+    {
+      "id": "size-guide",
+      "title": "Size Guide", 
+      "link": "/size-guide"
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "Gold": {
+    "name": "Gold",
+    "purities": [
+      {"label": "10k", "value": 40},
+      {"label": "14k", "value": 58},
+      {"label": "18k", "value": 75},
+      {"label": "22k", "value": 92},
+      {"label": "24k", "value": 100}
+    ],
+    "colors": [
+      {"name": "Yellow", "hex": "#FFD700"},
+      {"name": "White", "hex": "#F5F5DC"},
+      {"name": "Rose", "hex": "#E8B4B8"}
+    ]
+  },
+  "Silver": {
+    "name": "Silver",
+    "purities": [
+      {"label": "Sterling", "value": 92},
+      {"label": "Fine", "value": 100}
+    ],
+    "colors": [
+      {"name": "White", "hex": "#C0C0C0"},
+      {"name": "Oxidized", "hex": "#36454F"}
+    ]
+  },
+  "Platinum": {
+    "name": "Platinum", 
+    "purities": [
+      {"label": "950 Pt", "value": 95},
+      {"label": "900 Pt", "value": 90}
+    ],
+    "colors": [
+      {"name": "White", "hex": "#E5E4E2"}
+    ]
+  },
+  "Palladium": {
+    "name": "Palladium",
+    "purities": [
+      {"label": "950 Pd", "value": 95},
+      {"label": "500 Pd", "value": 50}
+    ],
+    "colors": [
+      {"name": "White", "hex": "#CED0DD"}
+    ]
+  },
+  "Stainless Steel": {
+    "name": "Stainless Steel",
+    "purities": [
+      {"label": "316L", "value": 100}
+    ],
+    "colors": [
+      {"name": "Silver", "hex": "#C0C0C0"}
+    ]
+  },
+  "Titanium": {
+    "name": "Titanium",
+    "purities": [
+      {"label": "Commercial Pure", "value": 100}
+    ],
+    "colors": [
+      {"name": "Silver", "hex": "#878681"},
+      {"name": "Blue", "hex": "#4169E1"},
+      {"name": "Black", "hex": "#000000"}
+    ]
+  },
+  "Brass": {
+    "name": "Brass",
+    "purities": [
+      {"label": "Standard", "value": 85}
+    ],
+    "colors": [
+      {"name": "Yellow", "hex": "#B5651D"}
+    ]
+  },
+  "Copper": {
+    "name": "Copper",
+    "purities": [
+      {"label": "Pure", "value": 100}
+    ],
+    "colors": [
+      {"name": "Copper", "hex": "#B87333"}
+    ]
+  },
+  "Bronze": {
+    "name": "Bronze",
+    "purities": [
+      {"label": "Standard", "value": 88}
+    ],
+    "colors": [
+      {"name": "Bronze", "hex": "#CD7F32"}
+    ]
+  },
+  "Tungsten": {
+    "name": "Tungsten",
+    "purities": [
+      {"label": "Carbide", "value": 100}
+    ],
+    "colors": [
+      {"name": "Black", "hex": "#000000"},
+      {"name": "Gray", "hex": "#808080"},
+      {"name": "Silver", "hex": "#C0C0C0"}
+    ]
+  },
+  "Pearl": {
+    "name": "Pearl",
+    "purities": [
+      {"label": "Cultured", "value": 100}
+    ],
+    "colors": [
+      {"name": "White", "hex": "#F8F8FF"},
+      {"name": "Cream", "hex": "#FFFDD0"},
+      {"name": "Black", "hex": "#36454F"},
+      {"name": "Golden", "hex": "#FFD700"}
+    ]
+  },
+  "Leather": {
+    "name": "Leather",
+    "purities": [
+      {"label": "Genuine", "value": 100}
+    ],
+    "colors": [
+      {"name": "Brown", "hex": "#8B4513"},
+      {"name": "Black", "hex": "#000000"},
+      {"name": "Tan", "hex": "#D2B48C"}
+    ]
+  },
+  "Wood": {
+    "name": "Wood",
+    "purities": [
+      {"label": "Natural", "value": 100}
+    ],
+    "colors": [
+      {"name": "Brown", "hex": "#8B4513"},
+      {"name": "Dark Brown", "hex": "#654321"},
+      {"name": "Light Brown", "hex": "#D2B48C"}
+    ]
+  },
+  "Coral": {
+    "name": "Coral",
+    "purities": [
+      {"label": "Natural", "value": 100}
+    ],
+    "colors": [
+      {"name": "Red", "hex": "#FF7F50"},
+      {"name": "Pink", "hex": "#FFC0CB"},
+      {"name": "White", "hex": "#FFFAF0"}
+    ]
+  },
+  "Amber": {
+    "name": "Amber",
+    "purities": [
+      {"label": "Natural", "value": 100}
+    ],
+    "colors": [
+      {"name": "Honey", "hex": "#FFC649"},
+      {"name": "Cognac", "hex": "#9A3300"},
+      {"name": "Green", "hex": "#ADFF2F"}
+    ]
+  },
+  "Ceramic": {
+    "name": "Ceramic",
+    "purities": [
+      {"label": "High-tech", "value": 100}
+    ],
+    "colors": [
+      {"name": "White", "hex": "#FFFFFF"},
+      {"name": "Black", "hex": "#000000"},
+      {"name": "Brown", "hex": "#8B4513"}
+    ]
+  },
+  "Carbon Fiber": {
+    "name": "Carbon Fiber",
+    "purities": [
+      {"label": "Composite", "value": 100}
+    ],
+    "colors": [
+      {"name": "Black", "hex": "#000000"},
+      {"name": "Gray", "hex": "#808080"}
+    ]
+  },
+  "Resin": {
+    "name": "Resin",
+    "purities": [
+      {"label": "Synthetic", "value": 100}
+    ],
+    "colors": [
+      {"name": "Black", "hex": "#000000"},
+      {"name": "Clear", "hex": "#F0F8FF"},
+      {"name": "Colored", "hex": "#FF69B4"}
+    ]
+  }
+}

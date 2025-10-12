@@ -1,0 +1,17 @@
+{
+  "types": [
+    "Diamond", "Ruby", "Sapphire", "Emerald", "Amethyst", "Citrine", 
+    "Garnet", "Peridot", "Topaz", "Aquamarine", "Tourmaline", "Tanzanite", 
+    "Opal", "Turquoise", "Jade", "Onyx", "Moonstone", "Labradorite", 
+    "Morganite", "Cubic Zirconia", "Moissanite", "Crystal"
+  ],
+  "cuts": [
+    "Round", "Princess", "Oval", "Marquise", "Pear", "Cushion", "Emerald", 
+    "Radiant", "Heart", "Trilliant", "Baguette", "Rose", "Cabochon", 
+    "Briolette", "Antique", "Asscher", "Old Mine", "Old European"
+  ],
+  "clarities": [
+    "FL", "IF", "VVS1", "VVS2", "VS1", "VS2", "SI1", "SI2", "I1", "I2", "I3",
+    "AAA", "AA+", "AA", "A+", "A", "B", "Loupe Clean", "Eye Clean", "Included"
+  ]
+}

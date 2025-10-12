@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+button { @apply cursor-pointer; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--light); }
+
+::-webkit-scrollbar-thumb {
+    border-radius: 50px;
+    background-color: var(--dark);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+/* HOME SECTIONS */
+.stacked { @apply grid [grid-template-areas:'stack']; }
+.stacked > * { @apply [grid-area:stack]; }
+
+.section { @apply gap-5 flex flex-col items-center; }
+
+/* ANIMATE */
+.animate { @apply transform transition-all duration-700 ease-out; }
+
+.animate-slide-in { @apply animate-[slideIn_0.5s_ease-out]; }
+.animate-slide-out { @apply animate-[slideOut_0.5s_ease-in]; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
