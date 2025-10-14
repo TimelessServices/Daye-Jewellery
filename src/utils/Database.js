@@ -1,141 +1,117 @@
-import sqlite3 from 'sqlite3';
-import path from 'path';
+import { createClient } from '@libsql/client';
 
-const DB_PATH = process.env.NODE_ENV === 'production' 
-    ? ':memory:' : path.join(process.cwd(), 'src/data/jewellery.db'); 
+// Create Turso client using environment variables
+const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
 /**
  * Execute a SELECT query that returns multiple rows
  */
-export function queryDB(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(DB_PATH);
-        
-        db.all(sql, params, (err, rows) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(rows);
-            }
-            db.close();
+export async function queryDB(sql, params = []) {
+    try {
+        const result = await client.execute({ sql, args: params });
+        return result.rows.map(row => {
+            const obj = {};
+            result.columns.forEach((col, index) => {
+                obj[col] = row[index];
+            });
+            return obj;
         });
-    });
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
  * Execute a SELECT query that returns a single row
  */
-export function queryOne(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(DB_PATH);
+export async function queryOne(sql, params = []) {
+    try {
+        const result = await client.execute({ sql, args: params });
+        if (result.rows.length === 0) return undefined;
         
-        db.get(sql, params, (err, row) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(row);
-            }
-            db.close();
+        const obj = {};
+        result.columns.forEach((col, index) => {
+            obj[col] = result.rows[0][index];
         });
-    });
+        return obj;
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
  * Execute INSERT, UPDATE, or DELETE operations
  */
-export function updateDB(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(DB_PATH);
-        
-        db.run(sql, params, function(err) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve({ 
-                    changes: this.changes,
-                    lastID: this.lastID 
-                });
-            }
-            db.close();
-        });
-    });
+export async function updateDB(sql, params = []) {
+    try {
+        const result = await client.execute({ sql, args: params });
+        return {
+            changes: result.rowsAffected,
+            lastID: result.lastInsertRowid
+        };
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
  * Execute multiple operations in a transaction
  */
-export function runTransaction(operations) {
-    return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(DB_PATH);
+export async function runTransaction(operations) {
+    const transaction = await client.transaction();
+    
+    try {
+        let results = [];
         
-        db.serialize(() => {
-            db.run("BEGIN TRANSACTION");
+        for (let i = 0; i < operations.length; i++) {
+            const { sql, params = [], type = 'run' } = operations[i];
             
-            let results = [];
-            let errors = [];
-            let completed = 0;
-            
-            operations.forEach((op, index) => {
-                const { sql, params = [], type = 'run' } = op;
+            try {
+                const result = await transaction.execute({ sql, args: params });
                 
                 if (type === 'get') {
-                    db.get(sql, params, (err, row) => {
-                        if (err) {
-                            errors.push({ index, error: err.message });
-                        } else {
-                            results[index] = row;
-                        }
-                        completed++;
-                        checkCompletion();
-                    });
+                    if (result.rows.length === 0) {
+                        results[i] = undefined;
+                    } else {
+                        const obj = {};
+                        result.columns.forEach((col, index) => {
+                            obj[col] = result.rows[0][index];
+                        });
+                        results[i] = obj;
+                    }
                 } else if (type === 'all') {
-                    db.all(sql, params, (err, rows) => {
-                        if (err) {
-                            errors.push({ index, error: err.message });
-                        } else {
-                            results[index] = rows;
-                        }
-                        completed++;
-                        checkCompletion();
+                    results[i] = result.rows.map(row => {
+                        const obj = {};
+                        result.columns.forEach((col, index) => {
+                            obj[col] = row[index];
+                        });
+                        return obj;
                     });
                 } else {
                     // Default to 'run' for INSERT/UPDATE/DELETE
-                    db.run(sql, params, function(err) {
-                        if (err) {
-                            errors.push({ index, error: err.message });
-                        } else {
-                            results[index] = { 
-                                changes: this.changes, 
-                                lastID: this.lastID 
-                            };
-                        }
-                        completed++;
-                        checkCompletion();
-                    });
+                    results[i] = {
+                        changes: result.rowsAffected,
+                        lastID: result.lastInsertRowid
+                    };
                 }
-            });
-            
-            function checkCompletion() {
-                if (completed === operations.length) {
-                    if (errors.length > 0) {
-                        db.run("ROLLBACK", () => {
-                            db.close();
-                            reject({ errors, partialResults: results });
-                        });
-                    } else {
-                        db.run("COMMIT", (commitErr) => {
-                            db.close();
-                            if (commitErr) {
-                                reject({ error: "Commit failed", details: commitErr.message });
-                            } else {
-                                resolve(results);
-                            }
-                        });
-                    }
-                }
+            } catch (opError) {
+                await transaction.rollback();
+                throw {
+                    errors: [{ index: i, error: opError.message }],
+                    partialResults: results
+                };
             }
-        });
-    });
+        }
+        
+        await transaction.commit();
+        return results;
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
 }
 
 /**
@@ -158,7 +134,7 @@ export async function getDBInfo() {
         return {
             tables: tables.map(t => t.name),
             views: views.map(v => v.name),
-            dbPath: DB_PATH
+            dbPath: process.env.TURSO_DATABASE_URL
         };
     } catch (error) {
         throw new Error(`Database info error: ${error.message}`);
