@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
+import { cachedFetch } from '@/utils/RequestCache';
 import { useCart, useWishlist } from '@/contexts/AppProvider';
 import { useToasts, useLoading, useModal } from '@/contexts/UIProvider';
 
@@ -27,16 +28,19 @@ export default function ShopCollection() {
 
     useEffect(() => {
         async function fetchCollectionItems() {
-            if (!CollectionID) return;
+            if (!CollectionID || loading.collectionItems) return;
             setLoading('collectionItems', true)
             
             try {
-                const data = await cachedFetch(`/api/collections/items?collectionID=${CollectionID}`);
+                const params = new URLSearchParams({ collectionID: CollectionID });
+                const data = await cachedFetch(`/api/collections/items?${params}`);
 
                 if (data.success) { 
-                    setCollection(data.collection);
+                    console.log("-- collection:", data.collection);
+                    setCollection(data.collection[0]);
                     setItems(data.items); 
                 }
+                else { console.log("-- CRAAAAAAAP"); }
             } catch (error) {
                 console.error('Failed to load collection items:', error);
             } finally {
@@ -46,11 +50,6 @@ export default function ShopCollection() {
 
         fetchCollectionItems();
     }, [CollectionID]);
-
-    if (!collection || items.length === 0) {
-        addToast({ message: "No Collection Found", type: "error" }); 
-        return null;
-    }
 
     // Set Cart
     const handleToCart = () => {
@@ -64,10 +63,12 @@ export default function ShopCollection() {
         console.log("--AddToFave: Deal With That");
     }
 
-    if (loading) return <div className="section"><div>Loading Collection...</div></div>;
+    if (loading.collectionItems) return <div className="section">Loading Collection...</div>;
+    if (!collection) return <div className='section'>No Collection Found</div>;
+    if (items.length === 0) return <div className='section'>No Items Found</div>;
 
     return (
-        <section className="w-full h-7/8 p-4">
+        <section className="w-full h-7/8 p-8">
             <CollectionHead item={collection} itemsLength={items.length} toCart={handleToCart} toFave={handleToFave} />
 
             {loading.collectionItems ? ( <p className="text-center py-8 text-dark">Loading collection items...</p> ) : (

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Diamond } from 'lucide-react';
 
+import gemData from '@/data/gem.json';
 import { FilterHead } from '@/components/filter/FilterHead';
 import { SelectedItem } from '@/components/filter/SelectedItem';
 import { SelectButton } from '@/components/filter/SelectButton';
 import { PropertySelector } from '@/components/filter/PropertySelector';
 
 export default function FilterGem({ filters, updaters }) {
-    const [gemData, setGemData] = useState(null);
     const [selectedGems, setSelectedGems] = useState([]);
     const [expandedGem, setExpandedGem] = useState(null);
 

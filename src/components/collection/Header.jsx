@@ -1,39 +1,37 @@
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useLoading } from '@/contexts/UIProvider';
 import { ArrowLeft, Heart, ShoppingBag } from 'lucide-react';
 
+function ColType(hasSet, hasSale, hasDeal) {
+    const types = [
+        hasSet ? "SET" : null,
+        hasSale ? "SALE" : null,
+        hasDeal ? "DEAL" : null
+    ].filter(Boolean);
+
+    return types.join(" | ");
+}
+
 export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
+    const { loading, setLoading } = useLoading();
+
     // Set Router to Shop/Collection Page
     const router = useRouter();
     const toShopMain = () => { router.push("/shop"); }
-
-    // Set CollectionItem Variables
-    const { setData, setSetData } = useState(null);
-    const { saleData, setSaleData } = useState(null);
-    const { dealData, setDealData } = useState(null);
-
-    useEffect(() => { setSetData({ totalPrice: item.TotalPrice }); }, [item.HasSet]);
-    useEffect(() => { setSaleData({ saleDiscount: item.SaleDiscount }); }, [item.HasSale]);
-    useEffect(() => { 
-        setDealData({
-            buyQuantity: item.BuyQuantity,
-            getQuantity: item.GetQuantity,
-            dealDiscount: item.DealDiscount
-        });
-    }, [item.HasDeal]);
 
     return (
         <div className="w-full h-7/8 p-4">
             <div className="w-full mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">            
                 {/* Breadcrumbs & Back Button */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                    <button onClick={() => toShopMain} className="flex items-center gap-2 text-dark hover:text-dark/70 
+                <div className="flex flex-col sm:items-center gap-2 sm:gap-4">
+                    <button onClick={toShopMain} className="w-full flex items-center gap-2 text-dark hover:text-dark/70 
                         text-sm sm:text-base">
                         <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
                         <span>Back to Shop</span>
                     </button>
+                    
                     <div className="text-dark/60 text-xs sm:text-sm">
-                        Collections / <span className="text-dark font-semibold">{collection.Name}</span>
+                        Collections / <span className="text-dark font-semibold">{item.Name}</span>
                     </div>
                 </div>
 
@@ -56,27 +54,21 @@ export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
             </div>
 
             {/* Collection Info */}
-            <div className="w-full p-4 mb-8">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold">{collection.Name}</h1>
-                        <p className="text-sm text-dark/70"> {collection.Type} | {itemsLength} items </p>
-                        
-                        {item.HasSet && (
-                            <p className="text-lg font-semibold text-dark pt-1">
-                                Collection Price: ${setData.totalPrice}</p>
-                        )}
+            <div className="w-full p-4 gap-4 flex flex-col">
+                <div>
+                    <h1 className="text-3xl font-bold">{item.Name}</h1>
+                    <p className="text-sm text-dark/70"> {ColType(item.HasSet, item.HasSale, item.HasDeal)} | {itemsLength} items </p>
+                </div>
+                
+                <div>
+                    {item.HasSet ? (<p className="text-md font-semibold text-dark pt-1">
+                        Collection Price: ${item.TotalPrice}</p>) : ""}
 
-                        {item.HasSale && (
-                            <p className="text-sm text-green-600 font-medium">
-                                Individual Items at {saleData.saleDiscount}% off</p>
-                        )}
+                    {item.HasSale ? (<p className="text-sm text-green-600 font-medium">
+                            Individual Items at {item.SaleDiscount}% off</p>) : ""}
 
-                        {item.HasDeal && (
-                            <p className="text-sm text-green-600 font-medium">
-                                Buy {dealData.BuyQuantity}, Get {dealData.getQuantity} {dealData.dealDiscount}% off</p>
-                        )}
-                    </div>
+                    {item.HasDeal ? (<p className="text-sm text-green-600 font-medium">
+                            Buy {item.BuyQuantity}, Get {item.GetQuantity} {item.DealDiscount}% off</p>) : ""}
                 </div>
             </div>
         </div>

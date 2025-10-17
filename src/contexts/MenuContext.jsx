@@ -82,12 +82,8 @@ export function MenuProvider({ children }) {
             collectionsMenuItem.submenu = collections.map(collection => ({
                 id: collection.CollectionID,
                 title: collection.Name,
-                description: `${collection.Type} • ${collection.ItemCount || 0} items`,
-                link: `/shop/${collection.CollectionID}`,
-                action: {
-                    type: "collection_view",
-                    params: { collection }
-                }
+                description: `${collection.ItemCount || 0} items`,
+                link: `/shop/${collection.CollectionID}`
             }));
             collectionsMenuItem.hasSubmenu = true;
         }

@@ -154,46 +154,5 @@
         "params": { "onSale": true }
       }
     }
-  ],
-  "mobileQuickLinks": [
-    {
-      "id": "new-arrivals",
-      "title": "New Arrivals", 
-      "link": "/shop",
-      "action": {
-        "type": "filter",
-        "method": "navigateWithFilters",
-        "params": { "sort": "newest" }
-      }
-    },
-    {
-      "id": "under-50",
-      "title": "Under $50",
-      "link": "/shop",
-      "action": {
-        "type": "filter",
-        "method": "navigateWithFilters", 
-        "params": { "price": { "min": 0, "max": 50 } }
-      }
-    },
-    {
-      "id": "browse-collections",
-      "title": "Browse Collections",
-      "link": "/shop",
-      "action": {
-        "type": "collection_browse",
-        "method": "showCollectionScroller"
-      }
-    },
-    {
-      "id": "care-guide", 
-      "title": "Care Guide",
-      "link": "/care-guide"
-    },
-    {
-      "id": "size-guide",
-      "title": "Size Guide", 
-      "link": "/size-guide"
-    }
   ]
 }

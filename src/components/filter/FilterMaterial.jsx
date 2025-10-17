@@ -1,30 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Gem } from 'lucide-react';
 
+import materialData from '@/data/material.json';
 import { FilterHead } from '@/components/filter/FilterHead';
 import { SelectedItem } from '@/components/filter/SelectedItem';
 import { SelectButton } from '@/components/filter/SelectButton';
 import { PropertySelector } from '@/components/filter/PropertySelector';
 
 export default function FilterMaterial({ filters, updaters }) {
-    const [materialData, setMaterialData] = useState(null);
     const [selectedMaterials, setSelectedMaterials] = useState([]);
     const [expandedMaterial, setExpandedMaterial] = useState(null);
-
-    // Load material data when component mounts
-    useEffect(() => {
-        const loadMaterialData = async () => {
-            try {
-                const response = await fetch('/data/material.json');
-                const data = await response.json();
-                setMaterialData(data);
-            } catch (error) {
-                console.error('Failed to load material data:', error);
-            }
-        };
-        
-        loadMaterialData();
-    }, []);
 
     // Sync with filters
     useEffect(() => {

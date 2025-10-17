@@ -8,27 +8,28 @@ export function CollectionItem({ item }) {
     const setCollection = () => { router.push(`/shop/${item.CollectionID}`); }
 
     return (
-        <div onClick={() => setCollection} className="flex flex-col text-center animate cursor-pointer hover:scale-95 
-            hover:bg-dark hover:text-light">
+        <div onClick={setCollection} className="h-full flex flex-col text-center cursor-pointer animate
+            hover:scale-95 hover:bg-dark hover:text-light">
 
             <div className="relative w-full aspect-square bg-white rounded-t-md shadow-inner-custom">
                 <Image src={`/COLLECTION_PLACEHOLDER.png`} fill className="object-contain"alt={`${item.Name} collection`} />
             </div>
 
-            <div className="w-full border-t-2 border-dark/50 p-3"> 
-                <p className="text-lg font-semibold pb-4">{item.Name}</p>
+            <div className="w-full h-full p-3 gap-4 flex flex-col justify-between bg-dark/15 border-t-2 border-dark/50"> 
+                <div>
+                    <p className="text-lg font-semibold">{item.Name}</p>
                 
-                {/* Item Count */}
-                <div className="flex items-center justify-center gap-1 text-sm opacity-75 mb-2">
-                    <Package size={16} />
-                    <span>{item.ItemCount || 0} items</span>
+                    <div className="flex items-center justify-center gap-1 text-sm opacity-75 mb-2">
+                        <Package size={16} />
+                        <span>{item.ItemCount || 0} items</span>
+                    </div>
                 </div>
 
                 {/* Pricing Info */}
                 <div className="text-center">
-                    {item.HasSet && (<p>Get For: ${item.TotalPrice}</p>)}
-                    {item.HasSale && (<p>Items at {item.SaleDiscount}% off</p>)}
-                    {item.HasDeal && (<p>Buy {item.BuyQuantity}, Get {item.GetQuantity} {item.DealDiscount}% off</p>)}
+                    {item.HasSet ? (<p>Get For: ${item.TotalPrice}</p>) : ""}
+                    {item.HasSale ? (<p>Items at {item.SaleDiscount}% off</p>) : ""}
+                    {item.HasDeal ? (<p>Buy {item.BuyQuantity}, Get {item.GetQuantity} {item.DealDiscount}% off</p>) : ""}
                 </div>
             </div>
         </div>
