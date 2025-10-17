@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Package } from 'lucide-react';
+import { useRouter } from "next/navigation";
 
 function getCollectionTypeColor(type) {
     switch(type) {
@@ -11,14 +12,15 @@ function getCollectionTypeColor(type) {
     }
 }
 
-export function CollectionItem({ item, onSelect, isSelected = false }) {
+export function CollectionItem({ item, isSelected = false }) {
+    const router = useRouter();
+    const setCollection = () => { router.push(`/shop/${item.CollectionID}`); }
+
     const hasDiscount = item.DiscountType && item.DiscountAmount;
     const hasFixedPrice = item.CollectionPrice !== null && item.CollectionPrice !== undefined;
 
-    const handleClick = () => { if (onSelect) { onSelect(item); } };
-
     return (
-        <div id={item.CollectionID} onClick={handleClick} className={`flex flex-col text-center animate cursor-pointer 
+        <div id={item.CollectionID} onClick={() => setCollection} className={`flex flex-col text-center animate cursor-pointer 
                 hover:scale-95 hover:bg-dark hover:text-light ${isSelected ? 'bg-dark text-light rounded-lg' 
                 : 'bg-light text-dark rounded-md'}`}>
 

@@ -40,7 +40,7 @@ export default function Order() {
         fetchOrder();
     }, [orderNumber]);
 
-    if (loading) return <div className="section"><div>Loading order...</div></div>;
+    if (loading) return <div className="section"><div>Loading Order...</div></div>;
     if (!orderData || !orderData.success) return <div className="section"><div>Order not found</div></div>;
 
     const { order, items } = orderData;

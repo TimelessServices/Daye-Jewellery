@@ -25,7 +25,7 @@ export function ShopItem({ id, desc, price, salePrice = null, type = "", sizes =
     const handleAddToCartClick = (e) => {
         e.stopPropagation();
         const modalId = `shop-${id}`;
-        openModal(modalId, { item: itemData });
+        openModal(modalId, { type: 'item', item: itemData });
     };
 
     const handleWishlistClick = (e) => {

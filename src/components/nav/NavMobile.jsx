@@ -1,27 +1,20 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { ChevronDown, Menu, User, X } from "lucide-react";
 
 import { NavLink } from "./NavLink";
-import { useMenu } from "@/hooks/useMenu";
+import { useMenu } from "@/contexts/MenuContext";      // Fixed import
 import { CartIcon } from "./cart/CartIcon";
 import { usePathname } from "next/navigation";
-import { ContentSwitcher } from "./ContentSwitcher";
+import { ContentSwitcher } from "./menu/ContentSwitcher"; // Updated import path
 import { WishlistIcon } from "./wishlist/WishlistIcon";
 
 export default function NavMobile() {
-    const { menuData } = useMenu();
+    const { menuState, toggleMenu, closeMenu, setContent } = useMenu();  // Use context state
     const pathname = usePathname();
-    const [isOpen, setIsOpen] = useState(false);
-    const [content, setContent] = useState("links-main");
-    const [currentSubmenu, setCurrentSubmenu] = useState(null);
 
     useEffect(() => {
-        setIsOpen(false);
-        setContent("links-main");
-        setCurrentSubmenu(null);
-    }, [pathname]);
-
-    const toggleMenu = () => setIsOpen(!isOpen);
+        closeMenu();  // Reset all menu state on route change
+    }, [pathname, closeMenu]);
 
     return (
         <nav className="flex p-4 gap-4 justify-between">
@@ -32,12 +25,12 @@ export default function NavMobile() {
                 <Menu size={24} />
             </NavLink>
 
-            {isOpen && (
+            {menuState.isOpen && (
                 <div className="fixed h-full backdrop-blur-xs bg-dark/25 inset-0 z-[1000]">
                     <div className="h-full w-7/8 flex flex-col p-4 justify-between bg-white border-r-2 border-dark/25">
                         
                         <div className="w-full flex justify-between">  
-                            <NavLink link="#" onClick={toggleMenu}>
+                            <NavLink link="#" onClick={closeMenu}>
                                 <X size={28} />
                             </NavLink>
 
@@ -48,21 +41,14 @@ export default function NavMobile() {
                         </div>
 
                         <div className="overflow-y-auto"> 
-                            <ContentSwitcher 
-                                content={content}
-                                menuData={menuData}
-                                currentSubmenu={currentSubmenu}
-                                onContentChange={setContent}
-                                onSubmenuSelect={setCurrentSubmenu}
-                                onMenuClose={() => setIsOpen(false)}
-                            />
+                            <ContentSwitcher />  {/* No more prop drilling! */}
                         </div>
 
                         <div className="flex gap-12 items-center justify-center">
                             <NavLink 
                                 link="#" 
                                 onClick={() => setContent("links-main")}
-                                classes={content === "links-main" ? "text-blue" : ""}
+                                classes={menuState.content === "links-main" ? "text-blue" : ""}
                             > 
                                 <Menu size={28} /> 
                             </NavLink>
@@ -73,13 +59,13 @@ export default function NavMobile() {
                             <WishlistIcon 
                                 size={28} 
                                 onClick={() => setContent("wishlist")}
-                                classes={content === "wishlist" ? "text-blue" : ""} 
+                                classes={menuState.content === "wishlist" ? "text-blue" : ""} 
                             />
 
                             <CartIcon 
                                 size={28} 
                                 onClick={() => setContent("cart")}
-                                classes={content === "cart" ? "text-blue" : ""} 
+                                classes={menuState.content === "cart" ? "text-blue" : ""} 
                             />
                         </div>
                     </div>

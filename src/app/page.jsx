@@ -7,7 +7,9 @@ import { Button } from "@/components/Button";
 import Reviews from "@/components/home/Reviews";
 import { useFilters } from "@/contexts/FilterContext";
 import { DisplayItem } from "@/components/home/DisplayItem";
-import { SelectionScroller } from "@/components/home/SelectionScroller";
+
+import BestSeller from "@/components/home/BestSeller";
+import CollectionScroller from "@/components/collection/Scroller";
 
 export default function Home() {
     const router = useRouter();
@@ -125,10 +127,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <SelectionScroller
-                title="BEST SELLERS"
-                apiEndpoint="best-sellers"
-            />
+            <BestSeller />
 
             <section className="relative aspect-[12/10] w-full md:aspect-auto md:h-screen">
                 <picture>
@@ -162,11 +161,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <SelectionScroller
-                title="OUR COLLECTIONS"
-                type="collections"
-                apiEndpoint="collections"
-            />
+            <CollectionScroller />
             <Reviews />
         </>
     );

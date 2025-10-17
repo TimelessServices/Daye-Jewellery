@@ -1,22 +1,24 @@
+import { useMenu } from "@/contexts/MenuContext";
 import { MenuList } from "./MenuList";
-import { CartContent } from "./cart/CartContent";
+import { CartContent } from "../cart/CartContent";
 import { SubMenuContent } from "./SubMenuContent";
-import { WishlistContent } from "./wishlist/WishlistContent";
+import { WishlistContent } from "../wishlist/WishlistContent";
 
-export function ContentSwitcher({ content, menuData, currentSubmenu, onContentChange, onSubmenuSelect, onMenuClose }) {
+export function ContentSwitcher() {
+    const { menuState, setActiveSubmenu, setContent, menuData } = useMenu();
+
     const handleMenuClick = (menuItem) => {
-        onSubmenuSelect(menuItem);
-        onContentChange(`submenu-${menuItem.id}`);
+        setActiveSubmenu(menuItem);
+        setContent(`submenu-${menuItem.id}`);
     };
 
-    switch (content) {
+    switch (menuState.content) {
         case "links-main": 
             return (
                 <MenuList 
                     menuItems={menuData?.mainNavigation} 
                     variant="mobile" 
                     onMenuClick={handleMenuClick}
-                    onMenuClose={onMenuClose} // Pass menu close handler
                 />
             );
         case "cart": 
@@ -24,12 +26,11 @@ export function ContentSwitcher({ content, menuData, currentSubmenu, onContentCh
         case "wishlist":
             return <WishlistContent />;
         default:
-            if (content.startsWith('submenu-')) {
+            if (menuState.content.startsWith('submenu-')) {
                 return (
                     <SubMenuContent 
-                        submenu={currentSubmenu} 
-                        onBack={() => onContentChange("links-main")}
-                        onMenuClose={onMenuClose} // Pass menu close handler
+                        submenu={menuState.activeSubmenu} 
+                        onBack={() => setContent("links-main")}
                     />
                 );
             }
@@ -38,7 +39,6 @@ export function ContentSwitcher({ content, menuData, currentSubmenu, onContentCh
                     menuItems={menuData?.mainNavigation} 
                     variant="mobile" 
                     onMenuClick={handleMenuClick}
-                    onMenuClose={onMenuClose} // Pass menu close handler
                 />
             );
     }

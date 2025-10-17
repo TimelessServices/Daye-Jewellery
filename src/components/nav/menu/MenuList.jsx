@@ -1,6 +1,6 @@
 import { MenuItem } from "./MenuItem";
 
-export function MenuList({ menuItems = [], variant = "mobile", onMenuClick = null, className = "", onMenuClose }) {
+export function MenuList({ menuItems = [], variant = "mobile", onMenuClick = null, className = "" }) {
     if (!menuItems?.length) return <div>Loading...</div>;
 
     return (
@@ -11,7 +11,6 @@ export function MenuList({ menuItems = [], variant = "mobile", onMenuClick = nul
                         menuItem={menuItem} 
                         variant={variant} 
                         onClick={onMenuClick}
-                        onMenuClose={onMenuClose} // Pass menu close handler
                     />
                 </li>
             ))}

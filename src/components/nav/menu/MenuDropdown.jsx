@@ -1,34 +1,15 @@
-import { NavLink } from "./NavLink";
-import { useRouter } from "next/navigation";
-import { useFilters } from "@/contexts/FilterContext";
+import { useMenu } from "@/contexts/MenuContext";
+import { NavLink } from "../NavLink";
 
-export function MenuDropdown({ menuItem, isOpen, onClose }) {
-    const { navigateWithFilters, navigateToCollection } = useFilters();
-    const router = useRouter();
-
+export function MenuDropdown({ menuItem, isOpen }) {
     if (!menuItem.hasSubmenu || !isOpen) return null;
-
-    const executeAction = (action) => {
-        switch (action.type) {
-            case 'filter':
-                navigateWithFilters(action.params, true);
-                break;
-            case 'collection_view':
-                navigateToCollection(action.params.collection);
-                break;
-            case 'page':
-                router.push(action.params.page);
-                break;
-            default:
-                router.push(action.link || '#');
-        }
-        if (onClose) onClose();
-    };
+    
+    const { executeAction, closeMenu } = useMenu();
 
     const handleSubmenuClick = (subItem, e) => {
         e.preventDefault();
-        if (subItem.action) {
-            executeAction(subItem.action);
+        if (subItem.action) { 
+            executeAction(subItem.action, closeMenu); 
         }
     };
 
@@ -37,7 +18,7 @@ export function MenuDropdown({ menuItem, isOpen, onClose }) {
             <div className="p-4">
                 <h3 className="font-semibold text-lg mb-4">{menuItem.title}</h3>
                 <ul className="space-y-2">
-                    {menuItem.submenu.map((subItem) => (
+                    {menuItem.submenu?.map((subItem) => (
                         <li key={subItem.id}>
                             <NavLink 
                                 link={subItem.link} 

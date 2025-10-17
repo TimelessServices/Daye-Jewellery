@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useContext, useCallback, useMemo, useReducer } from 'react';
 
 const UIContext = createContext();
 
@@ -110,39 +110,42 @@ function uiReducer(state, action) {
 export function UIProvider({ children }) {
     const [state, dispatch] = useReducer(uiReducer, initialState);
 
-    // Modal helpers
-    const openModal = (id, props) => dispatch({ type: 'OPEN_MODAL', id, props });
-    const closeModal = (id) => dispatch({ type: 'CLOSE_MODAL', id });
+    const openModal = useCallback((id, props) => 
+        dispatch({ type: 'OPEN_MODAL', id, props }), []);
     
-    // Dropdown helpers
-    const toggleDropdown = (dropdown) => dispatch({ type: 'TOGGLE_DROPDOWN', dropdown });
-    const closeAllDropdowns = () => dispatch({ type: 'CLOSE_ALL_DROPDOWNS' });
+    const closeModal = useCallback((id) => 
+        dispatch({ type: 'CLOSE_MODAL', id }), []);
     
-    // Loading helpers
-    const setLoading = (key, value) => dispatch({ type: 'SET_LOADING', key, value });
+    const toggleDropdown = useCallback((dropdown) => 
+        dispatch({ type: 'TOGGLE_DROPDOWN', dropdown }), []);
     
-    // Toast helpers
-    const addToast = (toast) => dispatch({ type: 'ADD_TOAST', toast });
-    const removeToast = (id) => dispatch({ type: 'REMOVE_TOAST', id });
+    const closeAllDropdowns = useCallback(() => 
+        dispatch({ type: 'CLOSE_ALL_DROPDOWNS' }), []); 
     
-    // Overlay helpers
-    const toggleOverlay = (overlay) => dispatch({ type: 'TOGGLE_OVERLAY', overlay });
+    const setLoading = useCallback((key, value) => 
+        dispatch({ type: 'SET_LOADING', key, value }), []);
     
-    // Form helpers
-    const setFormState = (form, state) => dispatch({ type: 'SET_FORM_STATE', form, state });
+    const addToast = useCallback((toast) => 
+        dispatch({ type: 'ADD_TOAST', toast }), []);
+    
+    const removeToast = useCallback((id) => 
+        dispatch({ type: 'REMOVE_TOAST', id }), []);
+    
+    const toggleOverlay = useCallback((overlay) => 
+        dispatch({ type: 'TOGGLE_OVERLAY', overlay }), []);
+    
+    const setFormState = useCallback((form, stateUpdate) => 
+        dispatch({ type: 'SET_FORM_STATE', form, state: stateUpdate }), []);
 
-    const value = {
-        // State
+    const value = useMemo(() => ({
         ...state,
-        
-        // Actions
         openModal, closeModal,
         toggleDropdown, closeAllDropdowns,
         setLoading,
         addToast, removeToast,
         toggleOverlay,
         setFormState
-    };
+    }), [state]);
 
     return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 }

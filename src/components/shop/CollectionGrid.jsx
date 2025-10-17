@@ -5,11 +5,12 @@ import { ArrowLeft, Heart, ShoppingBag } from 'lucide-react';
 import { ShopItem } from './ShopItem';
 import { cachedFetch } from "@/utils/RequestCache";
 import { useCart, useWishlist } from '@/contexts/AppProvider';
-import { useToasts, useLoading } from '@/contexts/UIProvider';
+import { useToasts, useLoading, useModal } from '@/contexts/UIProvider';
 
 export default function CollectionGrid({ collection, onBack }) {
     const [items, setItems] = useState([]);
     const { addToast } = useToasts();
+    const { openModal } = useModal();
 
     const { addToCart } = useCart();
     const { addToWishlist } = useWishlist();
@@ -31,19 +32,50 @@ export default function CollectionGrid({ collection, onBack }) {
 
     useEffect(() => { loadCollectionItems(); }, [collection]);
 
-    const handleGetAll = async () => {
-        if (loading.bagAll) return;
+    // Handle adding collection to cart via modal
+    const handleGetAll = () => {
+        if (loading.bagAll || items.length === 0) return;
         
+        // Open collection modal instead of direct cart add
+        openModal(`collection-${collection.CollectionID}`, {
+            type: 'collection',
+            collection: collection,
+            items: items,
+            onAddCollection: handleAddCollectionToCart
+        });
+    };
+
+    // The actual cart addition function (called by CollectionModal)
+    const handleAddCollectionToCart = async (collection, items, sizeSelections) => {
         setLoading('bagAll', true);
         
         try {
+            // Add each item with selected size
             for (const item of items) {
-                addToCart(item.JewelleryID, item.Desc, item.CollectionPrice || item.Price, 'N/A', 1);
+                const selectedSize = sizeSelections[item.JewelleryID] || 'OS';
+                addToCart(
+                    item.JewelleryID, 
+                    item.Desc, 
+                    item.Type, 
+                    item.CollectionPrice || item.Price, 
+                    selectedSize, 
+                    1
+                );
             }
-            addToast({ message: `Added ${items.length} items to cart!`, type: 'success' });
-        } 
-        catch (error) { addToast({ message: 'Failed to add items to cart', type: 'error' }); } 
-        finally { setLoading('bagAll', false); }
+            
+            addToast({ 
+                message: `Added ${collection.Name} collection to cart!`, 
+                type: 'success' 
+            });
+        } catch (error) {
+            addToast({ 
+                message: 'Failed to add collection to cart', 
+                type: 'error' 
+            });
+            throw error; // Re-throw so CollectionModal can handle it
+        } finally {
+            setLoading('bagAll', false);
+        }
     };
 
     const handleFavoriteAll = async () => {
@@ -81,7 +113,7 @@ export default function CollectionGrid({ collection, onBack }) {
 
                 {/* Collection Actions - Mobile Responsive */}
                 <div className="flex flex-row sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
-                    <button onClick={handleGetAll} disabled={loading.bagAll} className={`flex-1 sm:flex-none flex 
+                    <button onClick={handleGetAll} disabled={loading.bagAll || items.length === 0} className={`flex-1 sm:flex-none flex 
                         items-center justify-center gap-2 p-2 sm:p-3 border-2 border-dark rounded-lg text-sm sm:text-base 
                         animate hover:bg-dark hover:text-light min-h-[44px] ${loading.bagAll ? 'opacity-50' : ''}`}>
                         <ShoppingBag size={18} className="sm:w-5 sm:h-5" />
@@ -146,7 +178,7 @@ export default function CollectionGrid({ collection, onBack }) {
                 )}
 
                 {/* No Items Found */}
-                {!loading && items.length === 0 && (
+                {!loading.collectionItems && items.length === 0 && (
                     <p className="text-center py-8 text-dark">No items found in this collection</p>
                 )}
             </div>

@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { Search, User, ChevronDown } from "lucide-react";
 
 import { NavLink } from "./NavLink";
-import { MenuItem } from "./MenuItem";
-import { useMenu } from "@/hooks/useMenu";
+import { MenuItem } from "./menu/MenuItem";        // Updated import path
+import { useMenu } from "@/contexts/MenuContext";   // Fixed import
 import { CartIcon } from "./cart/CartIcon";
-import { MenuDropdown } from "./MenuDropdown";
+import { MenuDropdown } from "./menu/MenuDropdown"; // Updated import path
 import { usePathname } from "next/navigation";
 import { useFilters } from "@/contexts/FilterContext";
 import { WishlistIcon } from "./wishlist/WishlistIcon";
@@ -19,12 +19,14 @@ export default function NavPrimary() {
     const { dropdowns, toggleDropdown, closeAllDropdowns } = useDropdowns();
     const { loading, setLoading } = useLoading();
     const { addToast } = useToasts();
-    const { menuData, loading: menuLoading, error } = useMenu();
+    const { menuData, loading: menuLoading, error, closeMenu } = useMenu();  // Get closeMenu from context
 
     useEffect(() => {
         setQuery("");
         closeAllDropdowns();
-    }, [pathname]);
+        closeMenu();
+    }, [pathname, closeAllDropdowns, closeMenu]);
+
 
     if (menuLoading) return <nav className="flex px-12 py-4 justify-between">Loading...</nav>;
     if (error) return <nav className="flex px-12 py-4 justify-between">Error loading menu</nav>;
@@ -66,7 +68,7 @@ export default function NavPrimary() {
                 </NavLink>
 
                 <ul className="hidden xl:flex gap-6 items-center">
-                    {menuData?.mainNavigation.map((menuItem) => (
+                    {menuData?.mainNavigation?.map((menuItem) => (
                         <li key={menuItem.id} className="relative">
                             <div onMouseEnter={() => handleMenuHover(menuItem.id)} onMouseLeave={handleMenuLeave}>
                                 <MenuItem 
@@ -77,7 +79,6 @@ export default function NavPrimary() {
                                 <MenuDropdown 
                                     menuItem={menuItem}
                                     isOpen={dropdowns[`menu-${menuItem.id}`] || false}
-                                    onClose={closeAllDropdowns}
                                 />
                             </div>
                         </li>

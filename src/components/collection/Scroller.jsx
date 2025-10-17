@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Scroller } from "@/components/Scroller";
 
+import { CollectionItem } from './Item';
 import { cachedFetch } from "@/utils/RequestCache";
-import { CollectionItem } from './shop/CollectionItem';
 import { useLoading, useToasts } from '@/contexts/UIProvider';
 
-export default function CollectionScroller({ onCollectionSelect, selectedCollectionId = null }) {
+export default function CollectionScroller() {
     const [items, setItems] = useState([]);
 
     const { addToast } = useToasts();
@@ -16,15 +16,11 @@ export default function CollectionScroller({ onCollectionSelect, selectedCollect
         setLoading('collections', true);
 
         try {
-            const data = await cachedFetch('/api/collections');
+            const data = await cachedFetch('/api/collections/complex');
             if (data.success) { setItems(data.results); }
         } 
         catch (error) { addToast({ message: 'Failed to load collections', type: 'error' }); } 
         finally { setLoading('collections', false); }
-    };
-
-    const handleCollectionSelect = (collection) => {
-        if (onCollectionSelect) { onCollectionSelect(collection); }
     };
 
     useEffect(() => { loadCollections(); }, []);
@@ -33,10 +29,7 @@ export default function CollectionScroller({ onCollectionSelect, selectedCollect
         <div className="flex text-center items-center justify-center">
             <Scroller title="Our Collections">
                 {loading.collections ? ( <p>Loading collections...</p> ) : (
-                    items.map((item, index) => (
-                        <CollectionItem key={`${item.CollectionID}-${index}`} item={item} 
-                            onSelect={handleCollectionSelect} isSelected={selectedCollectionId === item.CollectionID} />
-                    ))
+                    items.map((item, index) => ( <CollectionItem key={`${item.CollectionID}-${index}`} item={item} /> ))
                 )}
             </Scroller>
         </div>

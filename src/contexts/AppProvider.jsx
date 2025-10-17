@@ -1,4 +1,5 @@
 "use client";
+import { MenuProvider } from './MenuContext';
 import { FilterProvider } from './FilterContext';
 import { createStorageContext } from './createStorageContext';
 
@@ -80,12 +81,14 @@ export function AppProvider({ children }) {
         <CartProvider>
             <WishlistProvider>
                 <FilterProvider>
-                    {children}
+                    <MenuProvider>
+                        {children}
+                    </MenuProvider>
                 </FilterProvider>
             </WishlistProvider>
         </CartProvider>
     );
 }
-
 export { useCart, useWishlist };
+export { useMenu } from './MenuContext';
 export { useFilters } from './FilterContext';

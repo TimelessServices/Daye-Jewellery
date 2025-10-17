@@ -1,38 +1,16 @@
+import { useMenu } from "@/contexts/MenuContext";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { NavLink } from "../NavLink";
 
-import { NavLink } from "./NavLink";
-import { useFilters } from "@/contexts/FilterContext";
-
-export function SubMenuContent({ submenu, onBack, onMenuClose }) {
-    const { navigateWithFilters, navigateToCollection } = useFilters();
-    const router = useRouter();
-
+export function SubMenuContent({ submenu, onBack }) {
+    const { executeAction, closeMenu } = useMenu();
+    
     if (!submenu) return <div>No submenu data</div>;
-
-    const executeAction = (action) => {
-        switch (action.type) {
-            case 'filter':
-                navigateWithFilters(action.params, true);
-                break;
-            case 'collection_view':
-                navigateToCollection(action.params.collection);
-                break;
-            case 'page':
-                router.push(action.params.page);
-                break;
-            default:
-                router.push(action.link || '#');
-        }
-        
-        // Close mobile menu
-        if (onMenuClose) onMenuClose();
-    };
 
     const handleSubmenuClick = (subItem, e) => {
         e.preventDefault();
-        if (subItem.action) {
-            executeAction(subItem.action);
+        if (subItem.action) { 
+            executeAction(subItem.action, closeMenu); 
         }
     };
 
@@ -46,7 +24,7 @@ export function SubMenuContent({ submenu, onBack, onMenuClose }) {
             </div>
             
             <ul className="flex flex-col gap-6">
-                {submenu.submenu.map((subItem) => (
+                {submenu.submenu?.map((subItem) => (
                     <li key={subItem.id}>
                         <NavLink 
                             link={subItem.link} 

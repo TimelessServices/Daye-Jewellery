@@ -36,7 +36,7 @@ export function Scroller({ title, children }) {
     }, [emblaApi, onSelect]);
 
     return (
-        <div className="w-full">
+        <div className="w-full mx-8 my-4">
             {/* Title and Navigation Header */}
             <div className="flex justify-between items-center border-b-2 border-dark pb-2">
                 <h2 className="pl-2 text-2xl text-dark font-title">{title}</h2>
