@@ -36,11 +36,9 @@ export default function ShopCollection() {
                 const data = await cachedFetch(`/api/collections/items?${params}`);
 
                 if (data.success) { 
-                    console.log("-- collection:", data.collection);
                     setCollection(data.collection[0]);
                     setItems(data.items); 
                 }
-                else { console.log("-- CRAAAAAAAP"); }
             } catch (error) {
                 console.error('Failed to load collection items:', error);
             } finally {

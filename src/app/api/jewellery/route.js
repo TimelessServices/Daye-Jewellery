@@ -1,4 +1,5 @@
 import { queryDB } from "@/utils/Database";
+import { JewelleryItem } from "@/utils/JewelleryDataModels";
 import JewelryQueryBuilder from "@/utils/JewelleryQueryBuilder";
 
 export async function GET(request) {
@@ -13,7 +14,10 @@ export async function GET(request) {
         const queryBuilder = new JewelryQueryBuilder();
         const offset = page * limit;
         const result = queryBuilder.buildQuery(filters, limit, offset);
-        const data = await queryDB(result.query, result.params);
+        const rawData = await queryDB(result.query, result.params);
+        
+        // Transform raw data using your new models
+        const transformedData = rawData.map(item => new JewelleryItem(item, result.queryType));
         
         return Response.json({
             success: true,
@@ -21,9 +25,9 @@ export async function GET(request) {
             queryType: result.queryType,
             page: page,
             limit: limit,
-            resultCount: data.length,
-            hasMore: data.length === limit,
-            results: data
+            resultCount: transformedData.length,
+            hasMore: transformedData.length === limit,
+            results: transformedData
         });
 
     } catch (error) {
