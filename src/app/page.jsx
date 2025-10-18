@@ -8,7 +8,7 @@ import Reviews from "@/components/home/Reviews";
 import { useFilters } from "@/contexts/FilterContext";
 import { DisplayItem } from "@/components/home/DisplayItem";
 
-import BestSeller from "@/components/home/BestSeller";
+import Preview from "@/components/home/Preview";
 import CollectionScroller from "@/components/collection/Scroller";
 
 export default function Home() {
@@ -127,7 +127,9 @@ export default function Home() {
                 </div>
             </section>
 
-            <BestSeller />
+            <Preview title="Best Sellers" view="BestSellers" />
+            <Preview title="New Arrivals" view="NewArrivals" />
+            <Preview title="On Sale Now" view="OnSaleNow" />
 
             <section className="relative aspect-[12/10] w-full md:aspect-auto md:h-screen">
                 <picture>
