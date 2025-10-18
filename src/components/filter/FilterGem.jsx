@@ -11,21 +11,6 @@ export default function FilterGem({ filters, updaters }) {
     const [selectedGems, setSelectedGems] = useState([]);
     const [expandedGem, setExpandedGem] = useState(null);
 
-    // Load gem data when component mounts
-    useEffect(() => {
-        const loadGemData = async () => {
-            try {
-                const response = await fetch('/data/gem.json');
-                const data = await response.json();
-                setGemData(data);
-            } catch (error) {
-                console.error('Failed to load gem data:', error);
-            }
-        };
-        
-        loadGemData();
-    }, []);
-
     // Sync with filters
     useEffect(() => {
         if (filters.gem) {

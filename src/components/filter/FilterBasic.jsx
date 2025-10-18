@@ -1,58 +1,10 @@
 import { Coins, DollarSign, SortAsc } from 'lucide-react';
 import { FilterHead } from '@/components/filter/FilterHead';
+
+import sortOptions from '@/data/sort-options.json';
 import TypeSelector from '@/components/filter/TypeSelector';
 
 export default function FilterBasic({filters, updaters}) {
-    const sortOptions = [
-        { value: "", label: "Featured" }, // Changed default
-        
-        // Price
-        { value: "price_asc", label: "Price: Low to High" },
-        { value: "price_desc", label: "Price: High to Low" },
-
-        // Alphabetical
-        { value: "name_asc", label: "Name: A - Z" },
-        { value: "name_desc", label: "Name: Z - A" },
-
-        // Value
-        { value: "biggest_discount", label: "Biggest Savings" },
-        { value: "best_value", label: "Best Value (% Off)" },
-        
-        // Popularity & Trending
-        { value: "bestsellers", label: "Best Sellers" },
-        { value: "trending", label: "Trending Now" },
-        { value: "popular_in_stock", label: "Popular & Available" },
-        { value: "hidden_gems", label: "Hidden Gems" },
-        
-        // New & Date-based
-        { value: "newest_first", label: "Just Arrived" },
-        { value: "new_arrivals", label: "New & Popular" },
-        { value: "oldest_first", label: "Classic Collection" },
-        
-        // Sales & Promotions  
-        { value: "sale_first", label: "On Sale" },
-        { value: "sale_best_deals", label: "Best Sale Deals" },
-        { value: "clearance", label: "Clearance Items" },
-        
-        // Availability
-        { value: "in_stock_first", label: "In Stock First" },
-        { value: "low_stock", label: "Limited Availability" },
-        { value: "last_chance", label: "Last Chance" },
-        
-        // Smart Categories
-        { value: "engagement_ready", label: "Engagement Rings" },
-        { value: "gift_ready", label: "Perfect for Gifts" },
-        { value: "budget_friendly", label: "Budget Friendly" },
-        { value: "luxury_items", label: "Luxury Collection" },
-        
-        // Advanced  
-        { value: "smart_featured", label: "Editor's Choice" },
-        { value: "editor_picks", label: "Curated Selection" },
-        
-        // Utility
-        { value: "random", label: "Surprise Me" }
-    ];
-
     return (
         <>
             {/* SORT */}
@@ -61,7 +13,7 @@ export default function FilterBasic({filters, updaters}) {
 
                 <select value={filters.sort || ""} onChange={(e) => updaters.updateSort(e.target.value)}
                     className="p-2 border-b-2 border-light">
-                        {sortOptions.map(option => (
+                        {sortOptions.options.map(option => (
                             <option key={option.value} value={option.value} className='p-1'>{option.label}</option>
                         ))}
                 </select>

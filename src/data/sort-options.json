@@ -1,0 +1,115 @@
+{
+  "default": "",
+  "options": [
+    {
+      "value": "",
+      "label": "Featured",
+      "category": "default"
+    },
+    {
+      "value": "price_asc",
+      "label": "Price: Low to High",
+      "category": "price"
+    },
+    {
+      "value": "price_desc", 
+      "label": "Price: High to Low",
+      "category": "price"
+    },
+    {
+      "value": "name_asc",
+      "label": "Name: A - Z", 
+      "category": "alphabetical"
+    },
+    {
+      "value": "name_desc",
+      "label": "Name: Z - A",
+      "category": "alphabetical"
+    },
+    {
+      "value": "bestsellers",
+      "label": "Best Sellers",
+      "category": "popularity"
+    },
+    {
+      "value": "trending", 
+      "label": "Trending Now",
+      "category": "popularity"
+    },
+    {
+      "value": "popular_in_stock",
+      "label": "Popular & Available",
+      "category": "popularity"
+    },
+    {
+      "value": "hidden_gems",
+      "label": "Hidden Gems",
+      "category": "popularity"
+    },
+    {
+      "value": "newest_first",
+      "label": "Just Arrived",
+      "category": "date"
+    },
+    {
+      "value": "new_arrivals",
+      "label": "New & Popular", 
+      "category": "date"
+    },
+    {
+      "value": "oldest_first",
+      "label": "Classic Collection",
+      "category": "date"
+    },
+    {
+      "value": "in_stock_first",
+      "label": "In Stock First",
+      "category": "availability"
+    },
+    {
+      "value": "low_stock", 
+      "label": "Limited Availability",
+      "category": "availability"
+    },
+    {
+      "value": "last_chance",
+      "label": "Last Chance",
+      "category": "availability"
+    },
+    {
+      "value": "engagement_ready",
+      "label": "Engagement Rings",
+      "category": "smart"
+    },
+    {
+      "value": "gift_ready",
+      "label": "Perfect for Gifts",
+      "category": "smart"
+    },
+    {
+      "value": "budget_friendly", 
+      "label": "Budget Friendly",
+      "category": "smart"
+    },
+    {
+      "value": "luxury_items",
+      "label": "Luxury Collection",
+      "category": "smart"
+    },
+    {
+      "value": "smart_featured",
+      "label": "Editor's Choice",
+      "category": "advanced"
+    },
+    {
+      "value": "editor_picks",
+      "label": "Curated Selection", 
+      "category": "advanced"
+    },
+    {
+      "value": "random",
+      "label": "Surprise Me",
+      "category": "utility"
+    }
+  ]
+}

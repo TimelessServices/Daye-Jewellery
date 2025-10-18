@@ -1,7 +1,9 @@
 "use client";
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+
 import FilterStorage from '@/utils/FilterStorage';
+import URLFilterManager from '@/utils/URLFilterManager';
 
 const FilterContext = createContext();
 const filterStorage = new FilterStorage();
@@ -12,64 +14,6 @@ export function FilterProvider({ children }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Helper to parse URL parameters into filter format
-    const parseUrlParams = useCallback((searchParams) => {
-        const urlFilters = {};
-        
-        if (searchParams.get('search')) {
-            urlFilters.search = searchParams.get('search');
-        }
-        
-        if (searchParams.get('types')) {
-            urlFilters.types = searchParams.get('types').split(',');
-        }
-        
-        if (searchParams.get('sale') === 'true') {
-            urlFilters.onSale = true;
-        }
-        
-        if (searchParams.get('sort')) {
-            urlFilters.sort = searchParams.get('sort');
-        }
-        
-        if (searchParams.get('minPrice') || searchParams.get('maxPrice')) {
-            urlFilters.price = {
-                min: parseInt(searchParams.get('minPrice')) || 0,
-                max: parseInt(searchParams.get('maxPrice')) || 5000
-            };
-        }
-        
-        return urlFilters;
-    }, []);
-
-    // Helper to build URL parameters from filters
-    const buildUrlParams = useCallback((filters) => {
-        const params = new URLSearchParams();
-        
-        if (filters.search) {
-            params.set('search', filters.search);
-        }
-        
-        if (filters.types && filters.types.length < 4) {
-            params.set('types', filters.types.join(','));
-        }
-        
-        if (filters.onSale) {
-            params.set('sale', 'true');
-        }
-        
-        if (filters.sort) {
-            params.set('sort', filters.sort);
-        }
-        
-        if (filters.price && (filters.price.min > 0 || filters.price.max < 5000)) {
-            if (filters.price.min > 0) params.set('minPrice', filters.price.min.toString());
-            if (filters.price.max < 5000) params.set('maxPrice', filters.price.max.toString());
-        }
-        
-        return params.toString();
-    }, []);
-
     useEffect(() => {
         setIsHydrated(true);
     }, []);
@@ -77,7 +21,7 @@ export function FilterProvider({ children }) {
     useEffect(() => {
         if (!isHydrated) return;
         
-        const urlFilters = parseUrlParams(searchParams);
+        const urlFilters = URLFilterManager.parseUrlParams(searchParams);
         const storedFilters = filterStorage.getFilters();
         
         // URL params take priority over stored filters
@@ -88,7 +32,7 @@ export function FilterProvider({ children }) {
         if (Object.keys(urlFilters).length > 0) {
             filterStorage.saveFilters(initialFilters);
         }
-    }, [isHydrated, searchParams, parseUrlParams]);
+    }, [isHydrated, searchParams]);
 
     // Main update function - updates filters and URL
     const updateFilters = useCallback((newFilters, updateUrl = true) => {
@@ -96,13 +40,50 @@ export function FilterProvider({ children }) {
         filterStorage.saveFilters(newFilters);
         
         if (updateUrl) {
-            const urlParams = buildUrlParams(newFilters);
+            const urlParams = URLFilterManager.buildUrlParams(newFilters);
             const newUrl = urlParams ? `/shop?${urlParams}` : '/shop';
             router.replace(newUrl, { scroll: false });
         }
-    }, [router, buildUrlParams]);
+    }, [router]);
 
-    // External navigation helper for Home page / Navigation menus
+    // Generate filter updaters dynamically instead of manually
+    const filterUpdaters = useMemo(() => {
+        if (!filters) return {};
+        
+        const createUpdater = (key, transformer) => (value) => {
+            const newFilters = { ...filters };
+            if (transformer) {
+                transformer(newFilters, value);
+            } else {
+                newFilters[key] = value;
+            }
+            updateFilters(newFilters);
+        };
+        
+        return {
+            updateSearch: createUpdater('search'),
+            updateSort: createUpdater('sort'),
+            updateTypes: createUpdater('types'),
+            updateOnSale: createUpdater('onSale'),
+
+            updatePrice: (min, max) => {
+                const newFilters = { ...filters };
+                newFilters.price = { min, max };
+                updateFilters(newFilters);
+            },
+            
+            updateMaterial: createUpdater('material', (filters, material) => {
+                filters.material = material;
+                filters.materialQuery = material.length > 0;
+            }),
+            updateGem: createUpdater('gem', (filters, gem) => {
+                filters.gem = gem;
+                filters.gemQuery = gem.length > 0;
+            })
+        };
+    }, [filters, updateFilters]);
+
+    // External navigation helper
     const navigateWithFilters = useCallback((targetFilters, resetExisting = false) => {
         const baseFilters = resetExisting ? filterStorage.getDefaultFilters : filterStorage.getFilters();
         const newFilters = { ...baseFilters, ...targetFilters };
@@ -110,15 +91,9 @@ export function FilterProvider({ children }) {
         setFilters(newFilters);
         filterStorage.saveFilters(newFilters);
         
-        const urlParams = buildUrlParams(newFilters);
+        const urlParams = URLFilterManager.buildUrlParams(newFilters);
         const newUrl = urlParams ? `/shop?${urlParams}` : '/shop';
         router.push(newUrl);
-    }, [router, buildUrlParams]);
-
-    // Navigate to collection - simple URL navigation
-    const navigateToCollection = useCallback((collection) => {
-        const url = `/shop?collection=${collection.CollectionID}`;
-        router.push(url);
     }, [router]);
 
     // Reset filters to defaults
@@ -128,61 +103,11 @@ export function FilterProvider({ children }) {
         router.replace('/shop', { scroll: false });
     }, [router]);
 
-    // Individual filter updater functions
-    const filterUpdaters = useMemo(() => {
-        if (!filters) return {};
-        
-        return {
-            updateSearch: (searchTerm) => {
-                const newFilters = { ...filters, search: searchTerm };
-                updateFilters(newFilters);
-            },
-            
-            updateSort: (sortValue) => {
-                const newFilters = { ...filters, sort: sortValue };
-                updateFilters(newFilters);
-            },
-            
-            updatePrice: (min, max) => {
-                const newFilters = { ...filters, price: { min, max } };
-                updateFilters(newFilters);
-            },
-            
-            updateTypes: (types) => {
-                const newFilters = { ...filters, types };
-                updateFilters(newFilters);
-            },
-            
-            updateOnSale: (onSale) => {
-                const newFilters = { ...filters, onSale };
-                updateFilters(newFilters);
-            },
-            
-            updateMaterial: (material) => {
-                const newFilters = { ...filters, material, materialQuery: material.length > 0 };
-                updateFilters(newFilters);
-            },
-            
-            updateGem: (gem) => {
-                const newFilters = { ...filters, gem, gemQuery: gem.length > 0 };
-                updateFilters(newFilters);
-            }
-        };
-    }, [filters, updateFilters]);
-
-    // Helper functions for external components
+    // Simplified preset filters
     const presetFilters = useMemo(() => ({
-        // For Home page DisplayItems
         filterByType: (type) => navigateWithFilters({ types: [type] }, true),
-        filterByCollection: (collection) => navigateWithFilters({ collection }, true),
-        filterBestSellers: () => navigateWithFilters({ sort: "bestsellers" }, true),
         filterOnSale: () => navigateWithFilters({ onSale: true }, true),
-        
-        // For Navigation menu items
-        filterNecklaces: () => navigateWithFilters({ types: ["Necklace"] }, true),
-        filterRings: () => navigateWithFilters({ types: ["Ring"] }, true),
-        filterEarrings: () => navigateWithFilters({ types: ["Earring"] }, true),
-        filterBracelets: () => navigateWithFilters({ types: ["Bracelet"] }, true),
+        filterBestSellers: () => navigateWithFilters({ sort: "bestsellers" }, true),
     }), [navigateWithFilters]);
 
     const value = useMemo(() => ({
@@ -190,11 +115,10 @@ export function FilterProvider({ children }) {
         filterUpdaters,
         presetFilters,
         navigateWithFilters,
-        navigateToCollection, // Simple navigation only
         resetFilters,
         updateFilters,
         isHydrated
-    }), [filters, filterUpdaters, presetFilters, navigateWithFilters, navigateToCollection, resetFilters, updateFilters, isHydrated]);
+    }), [filters, filterUpdaters, presetFilters, navigateWithFilters, resetFilters, updateFilters, isHydrated]);
 
     return (
         <FilterContext.Provider value={value}>

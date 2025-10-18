@@ -26,7 +26,7 @@ export default function CollectionScroller() {
     useEffect(() => { loadCollections(); }, []);
 
     return (
-        <div className="flex text-center items-center justify-center">
+        <div className="p-4 flex text-center items-center justify-center">
             <Scroller title="Our Collections">
                 {loading.collections ? ( <p>Loading collections...</p> ) : (
                     items.map((item, index) => ( <CollectionItem key={`${item.CollectionID}-${index}`} item={item} /> ))

@@ -1,7 +1,9 @@
 'use client';
-import { ItemModal } from './ItemModal';
-import { CollectionModal } from './CollectionModal';
 import { useModal } from '@/contexts/UIProvider';
+
+import { ItemModal } from './ItemModal';
+import { FilterModal } from './FilterModal';
+import { CollectionModal } from './CollectionModal';
 
 export function GlobalModal() {
     const { modals, closeModal } = useModal();
@@ -44,6 +46,21 @@ export function GlobalModal() {
                                 items={modalProps.items}
                                 closeModal={() => closeModal(modalId)}
                                 onAddCollection={modalProps.onAddCollection}
+                            />
+                        );
+
+                    case 'filter':
+                        if (!modalProps.filters || !modalProps.updaters) {
+                            console.error('FilterModal missing filters/updaters props:', modalId, modalProps);
+                            return null;
+                        }
+                        return (
+                            <FilterModal 
+                                key={modalId}
+                                isOpen={true}
+                                filters={modalProps.filters}
+                                updaters={modalProps.updaters}
+                                closeModal={() => closeModal(modalId)}
                             />
                         );
 

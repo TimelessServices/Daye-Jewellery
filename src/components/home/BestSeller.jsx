@@ -25,7 +25,7 @@ export default function BestSeller() {
     useEffect(() => { loadBestSellers(); }, []);
 
     return (
-        <div className="flex text-center items-center justify-center">
+        <div className="p-4 flex text-center items-center justify-center">
             <Scroller title="Best Sellers">
                 {loading.collections ? ( <p>Loading collections...</p> ) : (
                     items.map((item, index) => ( 

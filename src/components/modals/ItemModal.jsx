@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Plus, Minus, Heart, ShoppingBag } from 'lucide-react';
 
-import { SelectButton } from "./filter/SelectButton";
+import { SelectButton } from "../filter/SelectButton";
 import { useToasts, useLoading } from "@/contexts/UIProvider";
 import { useCart, useWishlist } from "@/contexts/AppProvider";
 

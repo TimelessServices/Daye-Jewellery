@@ -36,7 +36,7 @@ export function Scroller({ title, children }) {
     }, [emblaApi, onSelect]);
 
     return (
-        <div className="w-full mx-8 my-4">
+        <div className="w-full px-8 py-4">
             {/* Title and Navigation Header */}
             <div className="flex justify-between items-center border-b-2 border-dark pb-2">
                 <h2 className="pl-2 text-2xl text-dark font-title">{title}</h2>
@@ -61,8 +61,8 @@ export function Scroller({ title, children }) {
             </div>
 
             {/* Embla Container */}
-            <div className="p-4 overflow-hidden" ref={emblaRef}>
-                <div className="flex gap-4">
+            <div className="p-4 overflow-hidden shadow-inner-custom" ref={emblaRef}>
+                <div className="flex gap-6">
                     {React.Children.map(children, (child, i) => (
                         <div key={i} className="flex-[0_0_100%] sm:flex-[0_0_35%] lg:flex-[0_0_20%] min-w-0">
                             {child}

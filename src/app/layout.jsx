@@ -4,8 +4,8 @@ import "../styles/globals.css";
 import { Suspense } from "react";
 import { UIProvider } from "@/contexts/UIProvider";
 import { AppProvider } from "@/contexts/AppProvider";
-import { GlobalModal } from "@/components/GlobalModal";
 import { ToastContainer } from '@/components/ToastContainer';
+import { GlobalModal } from "@/components/modals/GlobalModal";
 
 import Footer from "@/components/foot/Footer";
 import NavController from "@/components/nav/NavController";
