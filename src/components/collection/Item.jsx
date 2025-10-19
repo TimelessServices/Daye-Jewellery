@@ -8,8 +8,8 @@ export function CollectionItem({ item }) {
     const setCollection = () => { router.push(`/shop/${item.CollectionID}`); }
 
     return (
-        <div onClick={setCollection} className="h-full flex flex-col bg-dark/15 text-center rounded-lg cursor-pointer 
-            animate hover:scale-95 hover:bg-dark hover:text-light">
+        <div onClick={setCollection} className="min-w-[225px] h-full flex flex-col bg-dark/15 text-center rounded-lg 
+            cursor-pointer animate hover:scale-95 hover:bg-dark hover:text-light">
 
             <div className="relative w-full aspect-square bg-white rounded-t-lg shadow-inner-custom">
                 <Image src={`/COLLECTION_PLACEHOLDER.png`} fill className="object-contain rounded-t-lg" alt={`${item.Name} Collection`} />

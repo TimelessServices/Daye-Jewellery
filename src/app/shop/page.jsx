@@ -76,7 +76,7 @@ export default function Shop() {
     if (!isHydrated || !filters) return <div>Loading...</div>;
 
     return (
-        <section className='px-12'>
+        <section className='lg:px-12'>
             <CollectionScroller />
             
             <div className="w-full p-4">

@@ -6,8 +6,8 @@ import { cachedFetch } from '@/utils/RequestCache';
 import { useCart, useWishlist } from '@/contexts/AppProvider';
 import { useToasts, useLoading, useModal } from '@/contexts/UIProvider';
 
+import ShopGrid from '@/components/shop/ItemGrid';
 import CollectionHead from '@/components/collection/Header';
-import CollectionGrid from '@/components/collection/ItemGrid';
 
 export default function ShopCollection() {
     const { addToast } = useToasts();
@@ -70,7 +70,7 @@ export default function ShopCollection() {
             <CollectionHead item={collection} itemsLength={items.length} toCart={handleToCart} toFave={handleToFave} />
 
             {loading.collectionItems ? ( <p className="text-center py-8 text-dark">Loading collection items...</p> ) : (
-                <CollectionGrid items={items} /> )}
+                <ShopGrid items={items} /> )}
 
             {!loading.collectionItems && items.length === 0 && (
                 <p className="text-center py-8 text-dark">No items found in this collection</p>

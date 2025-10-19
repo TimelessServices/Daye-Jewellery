@@ -11,6 +11,7 @@ const filterStorage = new FilterStorage();
 export function FilterProvider({ children }) {
     const [filters, setFilters] = useState(null);
     const [isHydrated, setIsHydrated] = useState(false);
+    
     const router = useRouter();
     const searchParams = useSearchParams();
 

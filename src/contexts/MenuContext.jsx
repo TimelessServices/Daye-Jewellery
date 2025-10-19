@@ -18,7 +18,7 @@ export function MenuProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    const { navigateWithFilters, navigateToCollection } = useFilters();
+    const { navigateWithFilters } = useFilters();
     const router = useRouter();
 
     // Fetch collections on mount
@@ -53,22 +53,17 @@ export function MenuProvider({ children }) {
                 navigateWithFilters(action.params, true);
                 break;
             case 'collection_view':
-                navigateToCollection(action.params.collection);
+                router.push(`/shop/${action.collection}`);
                 break;
             case 'page':
                 router.push(action.params.page);
-                break;
-            case 'collection_browse':
-                if (action.method === 'showCollectionScroller') {
-                    router.push('/shop');
-                }
                 break;
             default:
                 if (action.link) router.push(action.link);
         }
         
         if (onComplete) onComplete();
-    }, [navigateWithFilters, navigateToCollection, router]);
+    }, [navigateWithFilters, router]);
 
     // Process menu data with collections injected
     const processedMenuData = useMemo(() => {
@@ -83,7 +78,8 @@ export function MenuProvider({ children }) {
                 id: collection.CollectionID,
                 title: collection.Name,
                 description: `${collection.ItemCount || 0} items`,
-                link: `/shop/${collection.CollectionID}`
+                link: `/shop`,
+                action: { type: 'collection_view', collection: collection.CollectionID }
             }));
             collectionsMenuItem.hasSubmenu = true;
         }
