@@ -1,4 +1,5 @@
 import { queryDB } from "@/utils/Database";
+import { Jewellery } from "@/class/Jewellery";
 
 export async function GET(request) {
     try {
@@ -16,19 +17,11 @@ export async function GET(request) {
         const q2 = `SELECT * FROM vw_CollectionItems WHERE CollectionID = ?`;
 
         const collection = await queryDB(q1, [collectionID]);
-        const collectionItems = await queryDB(q2, [collectionID]);
-        
-        return Response.json({
-            success: true,
-            collection: collection,
-            items: collectionItems
-        });
-
-    } catch (error) {
+        const collectionItems = await queryDB(q2, [collectionID]);      
+        return Response.json({ success: true, collection: collection, items: collectionItems });
+    } 
+    catch (error) {
         console.error("Collection items query failed:", error);
-        return Response.json({
-            success: false,
-            error: error.message
-        }, { status: 500 });
+        return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }

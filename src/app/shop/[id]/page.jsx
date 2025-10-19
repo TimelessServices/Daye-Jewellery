@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
 import { cachedFetch } from '@/utils/RequestCache';
+import { JSON_ToJewellery } from '@/utils/JsonToClass';
 import { useCart, useWishlist } from '@/contexts/AppProvider';
 import { useToasts, useLoading, useModal } from '@/contexts/UIProvider';
 
@@ -35,9 +36,9 @@ export default function ShopCollection() {
                 const params = new URLSearchParams({ collectionID: CollectionID });
                 const data = await cachedFetch(`/api/collections/items?${params}`);
 
-                if (data.success) { 
+                if (data.success) {
                     setCollection(data.collection[0]);
-                    setItems(data.items); 
+                    setItems(JSON_ToJewellery(data.items)); 
                 }
             } catch (error) {
                 console.error('Failed to load collection items:', error);

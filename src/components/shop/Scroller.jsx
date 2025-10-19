@@ -4,6 +4,7 @@ import { ShopItem } from '../shop/Item';
 import { Scroller } from "@/components/Scroller";
 import { cachedFetch } from "@/utils/RequestCache";
 import { useLoading } from '@/contexts/UIProvider';
+import { JSON_ToJewellery } from '@/utils/JsonToClass';
 
 export default function ShopScroller({ title, view }) {
     const [items, setItems] = useState([]);
@@ -17,7 +18,7 @@ export default function ShopScroller({ title, view }) {
             const params = new URLSearchParams({ view });
             const data = await cachedFetch(`/api/preview?${params}`);
 
-            if (data.success) { setItems(data.results); }
+            if (data.success) { setItems(JSON_ToJewellery(data.results)); }
         } 
         catch (error) { addToast({ message: `Failed to load: ${title}`, type: 'error' }); } 
         finally { setLoading("shopScroller", false); }

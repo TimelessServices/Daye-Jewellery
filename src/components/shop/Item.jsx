@@ -2,21 +2,12 @@ import Image from "next/image";
 import { useState, useEffect } from 'react';
 import { Heart, ShoppingBag } from 'lucide-react';
 
+import { Badge } from "./Badge";
 import { useModal } from "@/contexts/UIProvider";
 import { useWishlist } from "@/contexts/AppProvider";
 
-function getImg(type) {
-    switch(type) {
-        case 'N': return "NECKLACE";
-        case 'B': return 'BRACELET';
-        case 'R': return 'RING';
-        case 'E': return 'EARRING';
-        default: return 'ITEM';
-    }
-}
-
-// Simple image existence check
-function useImageExists(src) {
+// Utility Functions
+function doesImgExist(src) {
     const [exists, setExists] = useState(false);
     
     useEffect(() => {
@@ -39,89 +30,78 @@ function useImageExists(src) {
     return exists;
 }
 
+function renderSetBadge(item) {
+    if (!item.isInSet || item.setTotal <= 0) { return; }
+    else if (item.setTotal === 1) { return ( <Badge type="SET" text={item.getSets[0].Name} /> ) }
+    else { return ( <Badge type="SET" text={`Find in ${item.setTotal} SETs`} /> ); }
+}
+
+function renderDealBadge(item) {
+    if (!item.doesHaveDeal || item.dealTotal <= 0) { return; }
+    else if (item.dealTotal === 1) { return ( <Badge type="DEAL" text={item.getDealString()} /> ); }
+    else { return ( <Badge type="DEAL" text={`Find in ${item.dealTotal} DEALs`} /> ); }
+}
+
 export function ShopItem({ item }) {
     const { openModal } = useModal();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-    
-    // Check if primary image exists, fallback to placeholder
-    const primaryExists = useImageExists(item.ImgPrimary);
-    const imageSrc = primaryExists ? item.ImgPrimary : `/${getImg(item.Type)}_PLACEHOLDER.png`;
-    
-    // Use the class utility method
-    const isOnSale = item.isOnSale;
-    const isWishlisted = isInWishlist(item.JewelleryID);
 
-    const handleAddToCartClick = (e) => {
+    const isWishlisted = isInWishlist(item.getID);
+
+    // Check Image
+    const imgPrimary = item.getImgPrimary;
+    const imgSrc = doesImgExist(imgPrimary) ? imgPrimary : item.getImgDefault();
+
+    // Open Item Modal
+    const openItemModal = (e) => {
         e.stopPropagation();
-        const modalId = `shop-${item.JewelleryID}`;
-        
-        // Keep your exact same modal data structure
-        const itemData = { 
-            id: item.JewelleryID, 
-            desc: item.Desc, 
-            price: item.Price, 
-            salePrice: item.BestSalePrice, 
-            type: item.Type, 
-            sizes: item.Sizes 
-        };
-        
-        openModal(modalId, { type: 'item', item: itemData });
+        const modalID = `jewellery-${item.getID}`;
+        openModal(modalID, { type: 'item', item });
     };
 
-    const handleWishlistClick = (e) => {
+    // Handle Wishlist
+    const handleWishlist = (e) => {
         e.stopPropagation();
-        if (isWishlisted) { 
-            removeFromWishlist(item.JewelleryID); 
-        } else { 
-            addToWishlist(item.JewelleryID, item.Desc, item.Price, item.BestSalePrice, item.Type, item.Sizes); 
-        }
+
+        isWishlisted ? removeFromWishlist(item.getID) : 
+            addToWishlist(item.getID, item.getDesc, item.getBasePrice, item.getSalePrice, item.getType, item.availableSizes);
     };
 
+    // Item Container
     return (
-        <div onClick={handleAddToCartClick} className="flex flex-col text-center text-dark animate hover:scale-95 cursor-pointer">
+        <div onClick={openItemModal} className="flex flex-col text-center text-dark animate hover:scale-95 cursor-pointer">
             <div className="relative w-full aspect-square bg-light shadow-lg rounded-lg">
-                <Image 
-                    fill 
-                    src={imageSrc} 
-                    className="object-contain"
-                    alt={`${item.Desc} - ${getImg(item.Type).toLowerCase()}`} 
-                />
+                <Image fill src={imgSrc} className="object-contain" alt={item.getDesc} />
 
-                <button 
-                    onClick={handleWishlistClick} 
-                    aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                    className="p-3 absolute top-2 right-2 hover:scale-110 animate rounded-full"
-                >
-                    <Heart 
-                        size={24} 
-                        className={`animate ${ 
-                            isWishlisted ? "text-red fill-red" : "text-dark hover:text-red hover:fill-red/20"
-                        }`}
+                {renderSetBadge(item)}
+                {renderDealBadge(item)}
+
+                <button onClick={handleWishlist} aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                    className="p-3 absolute top-2 right-2 hover:scale-110 animate rounded-full">
+                    <Heart size={24} className={`animate ${ isWishlisted ? "text-red fill-red" : 
+                        "text-dark hover:text-red hover:fill-red/20"}`}
                     />
                 </button>
             </div>
                 
             <div className="w-full h-30 flex text-center items-center justify-center">
-                <p className="px-4 py-2 text-sm font-main">{item.Desc}</p>
+                <p className="px-4 py-2 text-sm font-main">{item.getDesc}</p>
             </div>
 
             <div className="w-full h-15 flex flex-row border-b-2 border-dark">
                 <div className="w-3/4 text-2xl flex text-center items-center justify-center">
-                    {isOnSale ? (
+                    {item.isOnSale ? (
                         <div className="w-full flex flex-col">
-                            <p className="text-sm opacity-75 line-through">${item.Price}</p>
-                            <p className="text-2xl font-bold">${item.BestSalePrice}</p>
+                            <p className="text-sm opacity-75 line-through">${item.getBasePrice}</p>
+                            <p className="text-2xl font-bold">${item.getSalePrice}</p>
                         </div>
                     ) : ( 
-                        <p className="text-2xl">${item.Price}</p> 
+                        <p className="text-2xl">${item.getBasePrice}</p> 
                     )}
                 </div>
                 
-                <button
-                    onClick={handleAddToCartClick}
-                    className="w-1/4 text-light bg-dark flex text-center items-center justify-center animate
-                        hover:my-1 hover:bg-white hover:text-dark hover:border-2 hover:border-dark hover:rounded-full"
-                >
+                <button onClick={openItemModal} className="w-1/4 text-light bg-dark flex text-center items-center 
+                    justify-center animate hover:my-1 hover:bg-white hover:text-dark hover:border-2 hover:border-dark">
                     <ShoppingBag size={24} />
                 </button>
             </div>

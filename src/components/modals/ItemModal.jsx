@@ -33,12 +33,6 @@ export function ItemModal({ isOpen, item, closeModal, onSuccess }) {
     const { addToCart } = useCart();
     const modalRef = useRef(null);
 
-    // Parse sizes from pipe-delimited string
-    const availableSizes = useMemo(() => 
-        item?.sizes ? item.sizes.split('|').filter(s => s.trim()) : [] ,[item?.sizes]);
-
-    const hasSizes = availableSizes.length > 0;
-
     // Handle escape key
     useEffect(() => {
         const handleEscape = (e) => {
@@ -142,18 +136,16 @@ export function ItemModal({ isOpen, item, closeModal, onSuccess }) {
                     </div>
 
                     {/* Size Selection */}
-                    {hasSizes && (
-                        <div className="w-full mb-4">
-                            <label className="block text-sm font-medium text-dark mb-2"> Size </label>
-                            
-                            <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 sm:gap-4">
-                                {availableSizes.map(size => (
-                                    <SelectButton key={size} onClick={() => setSelectedSize(size)} disabled={isAdding}
-                                        isSelected={selectedSize === size}> {size} </SelectButton>
-                                ))}
-                            </div>
+                    <div className="w-full mb-4">
+                        <label className="block text-sm font-medium text-dark mb-2"> Size </label>
+                        
+                        <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 sm:gap-4">
+                            {item.sizes.map(size => (
+                                <SelectButton key={size} onClick={() => setSelectedSize(size)} disabled={isAdding}
+                                    isSelected={selectedSize === size}> {size} </SelectButton>
+                            ))}
                         </div>
-                    )}
+                    </div>
 
                     {/* Quantity Selection */}
                     <div className="w-full mb-6">

@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import { cachedFetch } from "@/utils/RequestCache";
 import { Toggle } from '@/components/filter/Toggle';
 import { useFilters } from '@/contexts/FilterContext';
+import { JSON_ToJewellery } from '@/utils/JsonToClass';
 import { useToasts, useLoading, useModal } from '@/contexts/UIProvider';
 
 import ShopGrid from '@/components/shop/ItemGrid';
@@ -41,8 +42,10 @@ export default function Shop() {
             const data = await cachedFetch(`/api/jewellery?${params}`)
 
             if (data.success) {
-                if (clearGrid) { setItems(data.results); } 
-                else { setItems(prev => [...prev, ...data.results]); }
+                const jewellery = JSON_ToJewellery(data.results);
+
+                if (clearGrid) { setItems(jewellery); } 
+                else { setItems(prev => [...prev, ...jewellery]); }
                 setHasMore(data.hasMore);
                 setPage(currentPage);
             } 

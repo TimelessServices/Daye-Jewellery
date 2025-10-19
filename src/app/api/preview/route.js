@@ -1,11 +1,12 @@
 import { queryDB } from "@/utils/Database";
+import { Jewellery } from "@/class/Jewellery";
 
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const view = searchParams.get("view");
 
-        const items = await queryDB(`SELECT * FROM vw_${view} LIMIT 15`);       
+        const items = await queryDB(`SELECT * FROM vw_${view} LIMIT 15`);
         return Response.json({ success: true, results: items });
     } 
     catch (error) {
