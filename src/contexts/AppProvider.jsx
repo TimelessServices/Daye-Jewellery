@@ -3,70 +3,114 @@ import { MenuProvider } from './MenuContext';
 import { FilterProvider } from './FilterContext';
 import { createStorageContext } from './createStorageContext';
 
-// Cart Configuration
 const cartConfig = {
     contextName: 'Cart',
     storageKey: 'jewelry_cart',
     storageType: 'sessionStorage',
-    itemIdKey: 'itemId',
+    itemIdKey: 'entryType',
     operations: {
-        count: (items) => items.reduce((total, item) => total + item.quantity, 0),
-        total: (items) => items.reduce((total, item) => total + (item.price * item.quantity), 0),
-        add: (prev, { itemId, desc, type, price, size, quantity = 1 }) => {
-            const existingIndex = prev.findIndex(item => item.itemId === itemId && item.size === size);
-            if (existingIndex >= 0) {
-                return prev.map((item, index) => 
-                    index === existingIndex 
-                        ? { ...item, quantity: item.quantity + quantity }
-                        : item
+        count: (items) =>
+            items.reduce((sum, item) => sum + (item.quantity || 1), 0),
+        total: (items) =>
+            items.reduce((sum, item) =>
+                item.entryType === 'item'
+                    ? sum + item.price * (item.quantity || 1)
+                    : sum + item.totalPrice * (item.quantity || 1)
+            , 0),
+        add: (prev, entry) => {
+            if (entry.entryType === 'item') {
+                // Match by itemId+size
+                const idx = prev.findIndex(
+                  x => x.entryType === 'item' &&
+                       x.itemId === entry.itemId &&
+                       x.size === entry.size
                 );
+                if (idx >= 0) {
+                    return prev.map((item, i) =>
+                        i === idx
+                            ? { ...item, quantity: item.quantity + (entry.quantity || 1) }
+                            : item
+                    );
+                }
+                return [...prev, { ...entry, quantity: entry.quantity || 1, addedAt: Date.now() }];
+            } else if (entry.entryType === 'set') {
+                const idx = prev.findIndex(
+                  x => x.entryType === 'set' && x.collectionID === entry.collectionID
+                );
+                if (idx >= 0) {
+                    return prev.map((item, i) =>
+                        i === idx
+                            ? { ...item, quantity: item.quantity + (entry.quantity || 1) }
+                            : item
+                    );
+                }
+                return [...prev, { ...entry, quantity: entry.quantity || 1, addedAt: Date.now() }];
+            } else if (entry.entryType === 'deal') {
+                const idx = prev.findIndex(
+                  x => x.entryType === 'deal' && x.collectionID === entry.collectionID
+                );
+                if (idx >= 0) {
+                    return prev.map((item, i) =>
+                        i === idx
+                            ? { ...item, quantity: item.quantity + (entry.quantity || 1) }
+                            : item
+                    );
+                }
+                return [...prev, { ...entry, quantity: entry.quantity || 1, addedAt: Date.now() }];
             }
-            return [...prev, { itemId, desc, type, price, size, quantity, addedAt: Date.now() }];
+            return prev;
         },
-        remove: (prev, { itemId, size }) => prev.filter(item => !(item.itemId === itemId && item.size === size)),
+        remove: (prev, identifier) => {
+            return prev.filter(item => {
+                if (identifier.entryType === 'item')
+                    return !(item.entryType === 'item' && item.itemId === identifier.itemId && item.size === identifier.size);
+                if (identifier.entryType === 'set')
+                    return !(item.entryType === 'set' && item.collectionID === identifier.collectionID);
+                if (identifier.entryType === 'deal')
+                    return !(item.entryType === 'deal' && item.collectionID === identifier.collectionID);
+                return true;
+            });
+        },
         custom: {
-            addToCart: (items, { add }) => (itemId, desc, type, price, size, quantity = 1) => {
-                add({ itemId, desc, type, price, size, quantity });
+            addToCart: (items, { add }) => (entry) => add(entry),
+            removeFromCart: (items, { remove }) => (identifier) => remove(identifier),
+            updateQuantity: (items, { add, remove }) => (identifier, newQuantity) => {
+                remove(identifier);
+                if (newQuantity > 0) {
+                    add({ ...identifier, quantity: newQuantity });
+                }
             },
-            removeFromCart: (items, { remove }) => (itemId, size) => {
-                remove({ itemId, size });
-            },
-            updateQuantity: (items, { add, remove }) => (itemId, size, newQuantity) => {
-                const quantity = Math.max(0, Math.floor(Number(newQuantity) || 0));
-                const existingItem = items.find(item => item.itemId === itemId && item.size === size);
-                
-                if (!existingItem) return; 
-                remove({ itemId, size });
-                if (quantity > 0) { add({ ...existingItem, quantity }); }
-            },
-            clearCart: (items, { clear }) => () => {
-                clear();
-            }
+            clearCart: (items, { clear }) => () => clear()
         }
     }
 };
 
-// Wishlist Configuration  
+// Wishlist Configuration
 const wishlistConfig = {
     contextName: 'Wishlist',
-    storageKey: 'jewelry_wishlist', 
+    storageKey: 'jewelry_wishlist',
     storageType: 'localStorage',
     operations: {
-        add: (prev, { itemId, desc, price, salePrice, type, sizes }) => {
-            const exists = prev.some(item => item.itemId === itemId);
-            if (exists) return prev;
-            return [...prev, { itemId, desc, price, salePrice, type, sizes, addedAt: Date.now() }];
+        add: (prev, entry) => {
+            if (entry.entryType === 'item')
+                return prev.some(x => x.entryType === 'item' && x.itemId === entry.itemId)
+                    ? prev
+                    : [...prev, { ...entry, addedAt: Date.now() }];
+            // Future: add set/deal here if needed
+            return prev;
+        },
+        remove: (prev, identifier) => {
+            if (identifier.entryType === 'item')
+                return prev.filter(x => !(x.entryType === 'item' && x.itemId === identifier.itemId));
+            // Future: add set/deal here if needed
+            return prev;
         },
         custom: {
-            addToWishlist: (items, { add }) => (itemId, desc, price, salePrice, type, sizes) => {
-                add({ itemId, desc, price, salePrice, type, sizes });
-            },
-            removeFromWishlist: (items, { remove }) => (itemId) => {
-                remove(itemId);
-            },
-            isInWishlist: (items) => (itemId) => {
-                return items.some(item => item.itemId === itemId);
-            }
+            addToWishlist: (items, { add }) => (entry) => add(entry),
+            removeFromWishlist: (items, { remove }) => (identifier) => remove(identifier),
+            isInWishlist: (items) => (entry) => items.some(
+                x => x.entryType === entry.entryType && x.itemId === entry.itemId
+            ),
         }
     }
 };

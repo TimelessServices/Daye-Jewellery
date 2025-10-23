@@ -92,7 +92,7 @@ export function ShopItem({ item }) {
                 <div className="w-3/4 text-2xl flex text-center items-center justify-center">
                     {item.isOnSale ? (
                         <div className="w-full flex flex-col">
-                            <p className="text-sm opacity-75 line-through">${item.getBasePrice}</p>
+                            <p className="text-red text-sm opacity-75 line-through">${item.getBasePrice}</p>
                             <p className="text-2xl font-bold">${item.getSalePrice}</p>
                         </div>
                     ) : ( 

@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useLoading } from '@/contexts/UIProvider';
-import { ArrowLeft, Heart, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, BadgePercent, ShoppingBag } from 'lucide-react';
 
 function ColType(hasSet, hasSale, hasDeal) {
     const types = [
@@ -10,6 +10,19 @@ function ColType(hasSet, hasSale, hasDeal) {
     ].filter(Boolean);
 
     return types.join(" | ");
+}
+
+function ActionButton(type, onClick, loadType) {
+    const clickTxt = type === "set" ? "Buy Set" : "Configure Deal";
+    
+    return (
+        <button onClick={onClick} disabled={loadType || itemsLength === 0} 
+            className={`gap-2 p-2 flex items-center justify-center border-2 border-dark rounded-lg text-sm animate
+                hover:bg-dark hover:text-light ${loadType ? 'opacity-50' : ''}`}>
+            {type === "set" ? <ShoppingBag size={18} /> : <BadgePercent size={18} />}
+            {loadType ? 'Adding...' : clickTxt}
+        </button>
+    );
 }
 
 export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
@@ -37,19 +50,8 @@ export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
 
                 {/* Collection Actions */}
                 <div className='flex flex-row items-center gap-4'>
-                    <button onClick={toCart} disabled={loading.toCart || itemsLength === 0} 
-                        className={`gap-2 p-2 flex items-center justify-center border-2 border-dark rounded-lg text-sm animate
-                            hover:bg-dark hover:text-light ${loading.toCart ? 'opacity-50' : ''}`}>
-                        <ShoppingBag size={18} />
-                        {loading.toCart ? 'Adding...' : 'Bag All'}
-                    </button>
-
-                    <button onClick={toFave} disabled={loading.toFave || itemsLength === 0} 
-                        className={`gap-2 p-2 flex items-center justify-center border-2 border-dark rounded-lg text-sm animate
-                            hover:bg-dark hover:text-light ${loading.toFave ? 'opacity-50' : ''}`}>
-                        <Heart size={18} />
-                        {loading.toFave ? 'Adding...' : 'Fave All'}
-                    </button>
+                    {ActionButton("set", toCart, loading.toCart)}
+                    {ActionButton("deal", toFave, loading.toFave)}
                 </div>
             </div>
 

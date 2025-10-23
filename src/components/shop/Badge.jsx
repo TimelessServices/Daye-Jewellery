@@ -9,7 +9,7 @@ export function Badge({ type, text }) {
     const config = badgeConfig[type];
 
     return (
-        <div className={`absolute ${config.position} px-3 py-2 rounded-full text-xs font-bold text-light ${config.color}
+        <div className={`absolute ${config.position} p-1 lg:px-3 lg:py-2 rounded-full text-xs font-bold text-light ${config.color}
             uppercase shadow-lg tracking-wide z-10 animate hover:scale-105`}> {text} </div>
     );
 }

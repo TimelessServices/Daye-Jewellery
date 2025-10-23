@@ -61,10 +61,10 @@ export function Scroller({ title, children }) {
             </div>
 
             {/* Embla Container */}
-            <div className="p-4 overflow-hidden shadow-inner-custom" ref={emblaRef}>
-                <div className="flex gap-10">
+            <div className="p-4 overflow-hidden" ref={emblaRef}>
+                <div className="flex gap-8">
                     {React.Children.map(children, (child, i) => (
-                        <div key={i} className="flex-[0_0_100%] sm:flex-[0_0_35%] lg:flex-[0_0_25%] min-w-0">
+                        <div key={i} className="flex-[0_0_88%] sm:flex-[0_0_28%] lg:flex-[0_0_20%] min-w-0">
                             {child}
                         </div>
                     ))}

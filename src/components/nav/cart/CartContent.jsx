@@ -2,9 +2,12 @@ import { memo } from "react";
 import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 
-import { CartItem } from "./CartItem";
 import { Button } from "@/components/Button";
 import { useCart } from "@/contexts/AppProvider";
+
+import { CartSet } from "./CartSet";
+import { CartItem } from "./CartItem";
+import { CartDeal } from "./CartDeal";
 
 export const CartContent = memo(function CartContent({ showTitle = false, className = "" }) {
     const router = useRouter();
@@ -29,14 +32,30 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
             )}
             
             <div className="p-2 flex-1 overflow-y-auto divide-y divide-dark/10">
-                {cart.map((cartItem, index) => (
-                    <CartItem 
-                        key={`${cartItem.itemId}-${cartItem.size}-${index}`} 
-                        item={cartItem}
-                        onRemove={() => removeFromCart(cartItem.itemId, cartItem.size)}
-                        onUpdateQuantity={(newQuantity) => updateQuantity(cartItem.itemId, cartItem.size, newQuantity)}
-                    />
-                ))}
+                {cart.map((cartItem, index) => {
+                    if (cartItem.entryType === "item") {
+                        return (
+                            <CartItem 
+                                key={`${cartItem.itemId}-${cartItem.size}-${index}`} 
+                                item={cartItem}
+                                onRemove={() => removeFromCart(cartItem.itemId, cartItem.size)}
+                                onUpdateQuantity={(newQuantity) => updateQuantity(cartItem.itemId, cartItem.size, newQuantity)}
+                            />
+                        )
+                    } 
+                    else if (cartItem.entryType === "set") {
+                        return (
+                            <CartSet key={`set-${cartItem.collectionID}-${index}`} set={cartItem}
+                                onRemove={() => removeFromCart({ entryType: "set", collectionID: cartItem.collectionID })} />
+                        )
+                    }
+                    else if (cartItem.entryType === "deal") {
+                        return (
+                            <CartDeal key={`deal-${cartItem.collectionID}-${index}`} deal={cartItem}
+                                onRemove={() => removeFromCart({ entryType: "deal", collectionID: cartItem.collectionID })} />
+                        )
+                    }
+                })}
             </div>
             
             <div className="mt-2 pt-4 space-y-4 border-t-1 border-dark">
