@@ -11,7 +11,6 @@ export async function loadDeals() {
         return storageResponse.data;
     }
 
-    // Fetch from API
     try {
         const response = await cachedFetch('/api/collections/deals');
 
@@ -23,8 +22,10 @@ export async function loadDeals() {
             throw new Error("Failed to load deals");
         }
     } catch (error) {
-        console.error("Error loading deals:", error);
-        return [];
+        console.error('Error loading deals:', error);
+        const fallback = readFromStorage();
+        if (fallback) { return fallback; }
+        return { deals: [], updatedAt: null, source: 'error', error };
     }
 }
 
