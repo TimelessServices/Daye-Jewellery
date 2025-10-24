@@ -62,9 +62,7 @@ export function ShopItem({ item }) {
     // Handle Wishlist
     const handleWishlist = (e) => {
         e.stopPropagation();
-
-        isWishlisted ? removeFromWishlist(item.getID) : 
-            addToWishlist(item.getID, item.getDesc, item.getBasePrice, item.getSalePrice, item.getType, item.availableSizes);
+        isWishlisted ? removeFromWishlist(item.getID) : addToWishlist(item.getID, item);
     };
 
     // Item Container

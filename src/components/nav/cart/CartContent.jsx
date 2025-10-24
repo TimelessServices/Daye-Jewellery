@@ -12,9 +12,15 @@ import { CartDeal } from "./CartDeal";
 export const CartContent = memo(function CartContent({ showTitle = false, className = "" }) {
     const router = useRouter();
     const toCheckout = () => { router.push("/checkout"); };
-    const { cart, removeFromCart, cartCount, cartTotal, updateQuantity } = useCart();
+    const { cart, removeFromCart, cartCount, cartTotal, updateCartQuantity } = useCart();
 
-    if (cart.length === 0) {
+    // Check if cart is empty by checking all object types
+    const isEmpty = 
+        Object.keys(cart.single).length === 0 && 
+        Object.keys(cart.set).length === 0 && 
+        Object.keys(cart.deals).length === 0;
+
+    if (isEmpty) {
         return (
             <div className={`flex flex-col items-center justify-center py-8 ${className}`}>
                 <ShoppingBag size={48} className="text-dark/70 mb-4" />
@@ -32,30 +38,21 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
             )}
             
             <div className="p-2 flex-1 overflow-y-auto divide-y divide-dark/10">
-                {cart.map((cartItem, index) => {
-                    if (cartItem.entryType === "item") {
-                        return (
-                            <CartItem 
-                                key={`${cartItem.itemID}-${cartItem.size}-${index}`} 
-                                item={cartItem}
-                                onRemove={() => removeFromCart(cartItem.itemID, cartItem.size)}
-                                onUpdateQuantity={(newQuantity) => updateQuantity(cartItem.itemID, cartItem.size, newQuantity)}
-                            />
-                        )
-                    } 
-                    else if (cartItem.entryType === "set") {
-                        return (
-                            <CartSet key={`set-${cartItem.collectionID}-${index}`} set={cartItem}
-                                onRemove={() => removeFromCart({ entryType: "set", collectionID: cartItem.collectionID })} />
-                        )
-                    }
-                    else if (cartItem.entryType === "deal") {
-                        return (
-                            <CartDeal key={`deal-${cartItem.collectionID}-${index}`} deal={cartItem}
-                                onRemove={() => removeFromCart({ entryType: "deal", collectionID: cartItem.collectionID })} />
-                        )
-                    }
-                })}
+                {/* Render single items */}
+                {Object.entries(cart.single).map(([key, item]) => (
+                    <CartItem  key={`single-${key}`}  item={item} onRemove={() => removeFromCart('single', key)}
+                        onUpdateQuantity={(newQuantity) => updateCartQuantity('single', key, newQuantity)} />
+                ))}
+
+                {/* Render sets */}
+                {Object.entries(cart.set).map(([id, set]) => (
+                    <CartSet key={`set-${id}`}  set={set} onRemove={() => removeFromCart('set', id)} />
+                ))}
+
+                {/* Render deals */}
+                {Object.entries(cart.deals).map(([id, deal]) => (
+                    <CartDeal key={`deal-${id}`}  deal={deal} onRemove={() => removeFromCart('deals', id)} />
+                ))}
             </div>
             
             <div className="mt-2 pt-4 space-y-4 border-t-1 border-dark">

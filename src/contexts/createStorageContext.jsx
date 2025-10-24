@@ -3,13 +3,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useCallback } 
 import { createStorageManager } from '@/utils/Storage';
 
 export function createStorageContext(config) {
-    const {
-        contextName,
-        storageKey,
-        storageType,
-        initialValue = [],
-        operations = {}
-    } = config;
+    const { contextName, storageKey, storageType, initialValue, operations } = config;
 
     const Context = createContext();
     const storage = createStorageManager(storageKey, storageType);

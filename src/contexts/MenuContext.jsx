@@ -1,21 +1,50 @@
 "use client";
-import { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 import menuData from '@/data/menus.json';
 import { useRouter } from "next/navigation";
 import { useFilters } from './FilterContext';
+import { cachedFetch } from '@/utils/RequestCache';
 
 const MenuContext = createContext();
 
-export function MenuProvider({ children, collections }) {
+export function MenuProvider({ children }) {
+    const [collections, setCollections] = useState([]);
+
     const [menuState, setMenuState] = useState({
         isOpen: false,
         activeSubmenu: null,
         content: "links-main"
     });
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     
     const { navigateWithFilters } = useFilters();
     const router = useRouter();
+
+    // Fetch collections on mount
+    useEffect(() => {
+        const fetchCollections = async () => {
+            try {
+                setError(null);
+                const response = await cachedFetch('/api/collections/simple');
+                if (response.success) {
+                    setCollections(response.results);
+                } else {
+                    throw new Error('Failed to fetch collections');
+                }
+            } catch (error) {
+                console.error('Failed to fetch collections:', error);
+                setError(error.message);
+                setCollections([]);  // Fallback to empty array
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        fetchCollections();
+    }, []);
 
     // Action execution - centralized logic
     const executeAction = useCallback((action, onComplete) => {
@@ -40,6 +69,7 @@ export function MenuProvider({ children, collections }) {
 
     // Process menu data with collections injected
     const processedMenuData = useMemo(() => {
+        if (error) return menuData;
         const processedMenu = JSON.parse(JSON.stringify(menuData)); // Deep copy
         
         // Find collections menu item and inject dynamic collections
@@ -57,7 +87,7 @@ export function MenuProvider({ children, collections }) {
         }
 
         return processedMenu;
-    }, []);
+    }, [collections, error]);
 
     // Centralized menu state management
     const openMenu = useCallback(() => {
