@@ -1,116 +1,132 @@
 "use client";
 import { MenuProvider } from './MenuContext';
 import { FilterProvider } from './FilterContext';
+import { useDealConfigure } from '@/hooks/useDealConfig';
 import { createStorageContext } from './createStorageContext';
 
+const data = useDealConfigure();
+
+function setDealInitial() {
+    const deals = {};
+    
+    // Check if data and data.deals exist
+    if (!data || !data.deals || !Array.isArray(data.deals)) {
+        console.warn('No deal data available or data.deals is not an array');
+        return deals;
+    }
+    
+    data.deals.forEach(deal => {
+        if (!deal.CollectionID) {
+            console.warn('Deal missing CollectionID:', deal);
+            return; 
+        }
+        
+        deals[deal.CollectionID] = {
+            Name: deal.Name, BuyQty: deal.BuyQuantity, GetQty: deal.GetQuantity,
+            Discount: deal.DealDiscount, BuyItems: [], GetItems: [] 
+        };
+    });
+    
+    return deals;
+}
+
+function add(cart, type, key, value) {
+    const prev = cart[type][key];
+    return {
+        ...cart,
+        [type]: {
+            ...cart[type],
+            [key]: {
+                ...value,
+                quantity: (prev?.quantity || 0) + (value.quantity || 1),
+                addedAt: Date.now()
+            }
+        }
+    }
+}
+
+function remove(cart, type, key) {
+    const next = { ...cart[type] };
+    delete next[key];
+    return { ...cart, [type]: next };
+}
+
+function update(cart, type, key, newQuantity) {
+    if (!cart[type][key]) return cart;
+    return {
+        ...cart,
+        [type]: {
+            ...cart[type],
+            [key]: {
+                ...cart[type][key],
+                quantity: newQuantity
+            }
+        }
+    }
+}
+
+
+// Cart Configuration: object-based, split ops for single, set, deal
 const cartConfig = {
     contextName: 'Cart',
     storageKey: 'jewelry_cart',
     storageType: 'sessionStorage',
-    itemIdKey: 'entryType',
+    initialValue: { single: {}, set: {}, deal: setDealInitial() },
     operations: {
-        count: (items) =>
-            items.reduce((sum, item) => sum + (item.quantity || 1), 0),
-        total: (items) =>
-            items.reduce((sum, item) =>
-                item.entryType === 'item'
-                    ? sum + item.price * (item.quantity || 1)
-                    : sum + item.totalPrice * (item.quantity || 1)
-            , 0),
-        add: (prev, entry) => {
-            if (entry.entryType === 'item') {
-                // Match by itemId+size
-                const idx = prev.findIndex(
-                  x => x.entryType === 'item' &&
-                       x.itemId === entry.itemId &&
-                       x.size === entry.size
-                );
-                if (idx >= 0) {
-                    return prev.map((item, i) =>
-                        i === idx
-                            ? { ...item, quantity: item.quantity + (entry.quantity || 1) }
-                            : item
-                    );
-                }
-                return [...prev, { ...entry, quantity: entry.quantity || 1, addedAt: Date.now() }];
-            } else if (entry.entryType === 'set') {
-                const idx = prev.findIndex(
-                  x => x.entryType === 'set' && x.collectionID === entry.collectionID
-                );
-                if (idx >= 0) {
-                    return prev.map((item, i) =>
-                        i === idx
-                            ? { ...item, quantity: item.quantity + (entry.quantity || 1) }
-                            : item
-                    );
-                }
-                return [...prev, { ...entry, quantity: entry.quantity || 1, addedAt: Date.now() }];
-            } else if (entry.entryType === 'deal') {
-                const idx = prev.findIndex(
-                  x => x.entryType === 'deal' && x.collectionID === entry.collectionID
-                );
-                if (idx >= 0) {
-                    return prev.map((item, i) =>
-                        i === idx
-                            ? { ...item, quantity: item.quantity + (entry.quantity || 1) }
-                            : item
-                    );
-                }
-                return [...prev, { ...entry, quantity: entry.quantity || 1, addedAt: Date.now() }];
+        count: (cart) =>
+            Object.values(cart.single).reduce((sum, item) => sum + (item.quantity || 1), 0)
+            + Object.values(cart.set).reduce((sum, item) => sum + (item.quantity || 1), 0)
+            + Object.values(cart.deals).reduce((sum, item) => sum + (item.quantity || 1), 0),
+        total: (cart) => {
+            let sum = 0;
+            for (const item of Object.values(cart.single)) {
+                sum += item.price * (item.quantity || 1);
             }
-            return prev;
+            for (const set of Object.values(cart.set)) {
+                sum += set.totalPrice * (set.quantity || 1);
+            }
+            for (const deal of Object.values(cart.deals)) {
+                sum += deal.totalPrice * (deal.quantity || 1);
+            }
+            return sum;
         },
-        remove: (prev, identifier) => {
-            return prev.filter(item => {
-                if (identifier.entryType === 'item')
-                    return !(item.entryType === 'item' && item.itemId === identifier.itemId && item.size === identifier.size);
-                if (identifier.entryType === 'set')
-                    return !(item.entryType === 'set' && item.collectionID === identifier.collectionID);
-                if (identifier.entryType === 'deal')
-                    return !(item.entryType === 'deal' && item.collectionID === identifier.collectionID);
-                return true;
-            });
-        },
+        add: (cart, type, key, value) => add(cart, type, key, value),
+        remove: (cart, type, key) => remove(cart, type, key),
+        update: (cart, type, key, newQuantity) => update(cart, type, key, newQuantity),
+        clear: () => ({ single: {}, set: {}, deals: {} }),
         custom: {
-            addToCart: (items, { add }) => (entry) => add(entry),
-            removeFromCart: (items, { remove }) => (identifier) => remove(identifier),
-            updateQuantity: (items, { add, remove }) => (identifier, newQuantity) => {
-                remove(identifier);
-                if (newQuantity > 0) {
-                    add({ ...identifier, quantity: newQuantity });
-                }
-            },
-            clearCart: (items, { clear }) => () => clear()
+            addToCart: (cart, ops) => (type, key, value) => ops.add(cart, type, key, value),
+            removeFromCart: (cart, ops) => (type, key) => ops.remove(cart, type, key),
+            updateCartQuantity: (cart, ops) => (type, key, qty) => ops.update(cart, type, key, qty),
+            clearCart: (cart, ops) => () => ops.clear()
         }
     }
 };
 
-// Wishlist Configuration
+// Wishlist: object keyed by itemID, only single items
 const wishlistConfig = {
     contextName: 'Wishlist',
     storageKey: 'jewelry_wishlist',
     storageType: 'localStorage',
+    initialValue: {},
     operations: {
-        add: (prev, entry) => {
-            if (entry.entryType === 'item')
-                return prev.some(x => x.entryType === 'item' && x.itemId === entry.itemId)
-                    ? prev
-                    : [...prev, { ...entry, addedAt: Date.now() }];
-            // Future: add set/deal here if needed
-            return prev;
+        addSingle: (wishlist, entry) => {
+            if (wishlist[entry.itemID]) return wishlist;
+            return {
+                ...wishlist,
+                [entry.itemID]: { ...entry, addedAt: Date.now() }
+            }
         },
-        remove: (prev, identifier) => {
-            if (identifier.entryType === 'item')
-                return prev.filter(x => !(x.entryType === 'item' && x.itemId === identifier.itemId));
-            // Future: add set/deal here if needed
-            return prev;
+        removeSingle: (wishlist, { itemID }) => {
+            const next = { ...wishlist };
+            delete next[itemID];
+            return next;
         },
+        clear: () => ({}),
         custom: {
-            addToWishlist: (items, { add }) => (entry) => add(entry),
-            removeFromWishlist: (items, { remove }) => (identifier) => remove(identifier),
-            isInWishlist: (items) => (entry) => items.some(
-                x => x.entryType === entry.entryType && x.itemId === entry.itemId
-            ),
+            addToWishlist: (wishlist, ops) => (entry) => ops.addSingle(entry),
+            removeFromWishlist: (wishlist, ops) => (identifier) => ops.removeSingle(identifier),
+            isInWishlist: (wishlist) => (entry) => !!wishlist[entry.itemID],
         }
     }
 };
@@ -119,13 +135,13 @@ const wishlistConfig = {
 const { Provider: CartProvider, useHook: useCart } = createStorageContext(cartConfig);
 const { Provider: WishlistProvider, useHook: useWishlist } = createStorageContext(wishlistConfig);
 
-// Unified App Provider
+// Unified App Provider (unchanged)
 export function AppProvider({ children }) {
     return (
         <CartProvider>
             <WishlistProvider>
                 <FilterProvider>
-                    <MenuProvider>
+                    <MenuProvider collections={data.collections} >
                         {children}
                     </MenuProvider>
                 </FilterProvider>

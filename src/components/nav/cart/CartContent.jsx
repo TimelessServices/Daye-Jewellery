@@ -36,10 +36,10 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
                     if (cartItem.entryType === "item") {
                         return (
                             <CartItem 
-                                key={`${cartItem.itemId}-${cartItem.size}-${index}`} 
+                                key={`${cartItem.itemID}-${cartItem.size}-${index}`} 
                                 item={cartItem}
-                                onRemove={() => removeFromCart(cartItem.itemId, cartItem.size)}
-                                onUpdateQuantity={(newQuantity) => updateQuantity(cartItem.itemId, cartItem.size, newQuantity)}
+                                onRemove={() => removeFromCart(cartItem.itemID, cartItem.size)}
+                                onUpdateQuantity={(newQuantity) => updateQuantity(cartItem.itemID, cartItem.size, newQuantity)}
                             />
                         )
                     } 

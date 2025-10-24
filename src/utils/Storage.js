@@ -8,13 +8,14 @@ export const createStorageManager = (key, storageType = 'localStorage') => {
         get: () => {
             try {
                 const storage = getStorage();
-                if (!storage) return [];
+                if (!storage) return { success: false, error: `${key} Error: StorageType === NULL` };
                 
                 const data = storage.getItem(key);
-                return data ? JSON.parse(data) : [];
+                return data ? { success: true, data: JSON.parse(data) } 
+                    : { success: false, error: `${key} Error: No Data Found!` };
             } catch (error) {
                 console.warn(`Failed to get ${key} from ${storageType}:`, error);
-                return [];
+                return { success: false, error: `${key} Error: ${error}` };
             }
         },
         

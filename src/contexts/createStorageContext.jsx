@@ -3,11 +3,11 @@ import { createContext, useContext, useState, useEffect, useMemo, useCallback } 
 import { createStorageManager } from '@/utils/Storage';
 
 export function createStorageContext(config) {
-    const { 
-        contextName, 
-        storageKey, 
+    const {
+        contextName,
+        storageKey,
         storageType,
-        itemIdKey = 'itemId',
+        initialValue = [],
         operations = {}
     } = config;
 
@@ -15,12 +15,14 @@ export function createStorageContext(config) {
     const storage = createStorageManager(storageKey, storageType);
 
     function Provider({ children }) {
-        const [items, setItems] = useState([]);
+        const [items, setItems] = useState(initialValue);
         const [isHydrated, setIsHydrated] = useState(false);
 
-        // Generic computed values
+        // Computed values
         const count = useMemo(() => {
-            return operations.count ? operations.count(items) : items.length;
+            return operations.count ? operations.count(items) : (
+                Array.isArray(items) ? items.length : Object.keys(items).length
+            );
         }, [items]);
 
         const total = useMemo(() => {
@@ -34,20 +36,22 @@ export function createStorageContext(config) {
         // Load from storage on mount
         useEffect(() => {
             setIsHydrated(true);
-            const saved = storage.get();
-            setItems(saved);
+            const result = storage.get();
+
+            if (result.success) { setItems(result.data); }
+            else { console.error(`-- Load Error: ${result.error}`); }
         }, []);
 
         // Cross-tab sync for localStorage
         useEffect(() => {
             if (storageType !== 'localStorage') return;
-            
+
             const handleStorageChange = (e) => {
                 if (e.key === storageKey && e.storageArea === localStorage) {
                     try {
-                        setItems(JSON.parse(e.newValue || '[]'));
-                    } catch { 
-                        setItems([]); 
+                        setItems(JSON.parse(e.newValue || (typeof initialValue === "object" ? '{}' : '[]')));
+                    } catch {
+                        setItems(initialValue);
                     }
                 }
             };
@@ -56,61 +60,65 @@ export function createStorageContext(config) {
             return () => window.removeEventListener('storage', handleStorageChange);
         }, []);
 
-        // Generic operations
-        const add = useCallback((item) => {
-            setItems(prev => {
-                const newItems = operations.add ? operations.add(prev, item) : [...prev, item];
-                storage.set(newItems);
-                return newItems;
-            });
-        }, []);
+        // Generate all operations from config.operations
+        const operationFns = {};
+        for (const opName in operations) {
+            if (typeof operations[opName] === "function" && opName !== "count" && opName !== "total" && opName !== "custom") {
+                operationFns[opName] = useCallback((...args) => {
+                    setItems(prev => {
+                        const result = operations[opName](prev, ...args);
+                        storage.set(result);
+                        return result;
+                    });
+                }, []);
+            }
+        }
 
-        const remove = useCallback((identifier) => {
-            setItems(prev => {
-                const newItems = operations.remove ? operations.remove(prev, identifier) : 
-                    prev.filter(item => item[itemIdKey] !== identifier);
-                storage.set(newItems);
-                return newItems;
-            });
-        }, []);
-
-        const update = useCallback((identifier, updateFn) => {
-            setItems(prev => {
-                const newItems = prev.map(item => 
-                    item[itemIdKey] === identifier ? updateFn(item) : item
-                );
-                storage.set(newItems);
-                return newItems;
-            });
-        }, []);
-
+        // Standard clear
         const clear = useCallback(() => {
-            setItems([]);
+            setItems(typeof initialValue === "object" && !Array.isArray(initialValue) ? { ...initialValue } : []);
             storage.clear();
         }, []);
 
+        // Find & exists for objects and arrays
         const find = useCallback((identifier) => {
-            return items.find(item => item[itemIdKey] === identifier);
+            if (Array.isArray(items)) {
+                return items.find(item => item.itemId === identifier);
+            } else if (typeof items === "object") {
+                return items[identifier] || null;
+            }
+            return null;
         }, [items]);
 
         const exists = useCallback((identifier) => {
-            return items.some(item => item[itemIdKey] === identifier);
+            if (Array.isArray(items)) {
+                return items.some(item => item.itemId === identifier);
+            } else if (typeof items === "object") {
+                return !!items[identifier];
+            }
+            return false;
         }, [items]);
 
-        const customOperations = useMemo(() => 
+        // Custom operations
+        const customOperations = useMemo(() =>
             Object.keys(operations.custom || {}).reduce((acc, key) => {
-                acc[key] = operations.custom[key](items, { add, remove, update, clear });
+                acc[key] = operations.custom[key](items, { ...operationFns, clear });
                 return acc;
             }, {}),
-            [items, add, remove, update, clear]
+            [items, ...Object.values(operationFns), clear]
         );
 
+        // Compose context value
         const value = useMemo(() => {
             const baseValue = {
                 items,
                 count,
                 total,
-                add, remove, update, clear, find, exists, isHydrated,
+                ...operationFns,
+                clear,
+                find,
+                exists,
+                isHydrated,
                 ...customOperations
             };
 
@@ -123,11 +131,11 @@ export function createStorageContext(config) {
                 baseValue.wishlistCount = count;
                 baseValue.wishlistTotal = total;
             }
-            
-            return baseValue;
-        }, [items, count, total, add, remove, update, clear, find, exists, isHydrated, customOperations, contextName]);
 
-        if (!isHydrated) return <div style={{display: 'none'}}>{children}</div>;
+            return baseValue;
+        }, [items, count, total, operationFns, clear, find, exists, isHydrated, customOperations, contextName]);
+
+        if (!isHydrated) return <div style={{ display: 'none' }}>{children}</div>;
 
         return <Context.Provider value={value}>{children}</Context.Provider>;
     }
