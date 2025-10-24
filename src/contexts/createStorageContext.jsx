@@ -11,6 +11,7 @@ export function createStorageContext(config) {
     function Provider({ children }) {
         const [items, setItems] = useState(initialValue);
         const [isHydrated, setIsHydrated] = useState(false);
+        const [hydrationVersion, setHydrationVersion] = useState(0);
 
         // Computed values
         const count = useMemo(() => {
@@ -29,11 +30,28 @@ export function createStorageContext(config) {
 
         // Load from storage on mount
         useEffect(() => {
-            setIsHydrated(true);
-            const result = storage.get();
+            let cancelled = false;
 
-            if (result.success) { setItems(result.data); }
-            else { console.error(`-- Load Error: ${result.error}`); }
+            const hydrateFromStorage = () => {
+                const result = storage.get();
+
+                if (cancelled) { return; }
+
+                if (result.success) {
+                    setItems(result.data);
+                } else if (result?.error) {
+                    console.error(`-- Load Error: ${result.error}`);
+                }
+
+                setIsHydrated(true);
+                setHydrationVersion(prev => prev + 1);
+            };
+
+            hydrateFromStorage();
+
+            return () => {
+                cancelled = true;
+            };
         }, []);
 
         // Cross-tab sync for localStorage
@@ -47,6 +65,8 @@ export function createStorageContext(config) {
                     } catch {
                         setItems(initialValue);
                     }
+                    setIsHydrated(true);
+                    setHydrationVersion(prev => prev + 1);
                 }
             };
 
@@ -113,6 +133,7 @@ export function createStorageContext(config) {
                 find,
                 exists,
                 isHydrated,
+                hydrationVersion,
                 ...customOperations
             };
 
@@ -129,7 +150,13 @@ export function createStorageContext(config) {
             return baseValue;
         }, [items, count, total, operationFns, clear, find, exists, isHydrated, customOperations, contextName]);
 
-        if (!isHydrated) return <div style={{ display: 'none' }}>{children}</div>;
+        if (!isHydrated) {
+            return (
+                <Context.Provider value={value}>
+                    <div style={{ display: 'none' }}>{children}</div>
+                </Context.Provider>
+            );
+        }
 
         return <Context.Provider value={value}>{children}</Context.Provider>;
     }
