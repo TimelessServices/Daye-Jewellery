@@ -14,8 +14,8 @@ export function ItemModal({ isOpen, item, closeModal, onSuccess }) {
     const { loading, setLoading } = useLoading();
     const { addToast } = useToasts();
 
-    const isAdding = loading.addToCart;
-    const justAdded = loading.cartSuccess;
+    const isAdding = loading['itemModal:addToCart'];
+    const justAdded = loading['itemModal:addToCartSuccess'];
     
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const isWishlisted = item ? isInWishlist(item.getID) : false;
@@ -58,24 +58,24 @@ export function ItemModal({ isOpen, item, closeModal, onSuccess }) {
             return;
         }
 
-        setLoading('addToCart', true);
+        setLoading('itemModal:addToCart', true);
 
         try {
             addToCart('single', `${item.getID}_${selectedSize}`,
                 { type: item.getType, desc: item.getDesc, quantity: quantity, price: currentPrice });
 
-            setLoading('cartSuccess', true);
-            setLoading('addToCart', false);
+            setLoading('itemModal:addToCartSuccess', true);
+            setLoading('itemModal:addToCart', false);
             addToast({ message: 'Added to cart successfully!', type: 'success'});
 
             setTimeout(() => {
-                setLoading('cartSuccess', false); 
+                setLoading('itemModal:addToCartSuccess', false);
                 if (onSuccess) onSuccess();
                 closeModal();
             }, 500)
         } 
         catch (error) { addToast({ message: 'Error adding item to cart', type: 'error' }); } 
-        finally { setLoading('addToCart', false); }
+        finally { setLoading('itemModal:addToCart', false); }
     };
 
     const adjustQuantity = (delta) => {

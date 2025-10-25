@@ -9,10 +9,11 @@ import { JSON_ToJewellery } from '@/utils/JsonToClass';
 export default function ShopScroller({ title, view }) {
     const [items, setItems] = useState([]);
     const { loading, setLoading } = useLoading();
+    const loadingKey = `shopScroller:${view}`;
 
     const loadPreviewItems = async () => {
-        if (loading.shopScroller) return;
-        setLoading("shopScroller", true);
+        if (loading[loadingKey]) return;
+        setLoading(loadingKey, true);
 
         try {
             const params = new URLSearchParams({ view });
@@ -29,7 +30,7 @@ export default function ShopScroller({ title, view }) {
             console.error(`-- Preview Error: ${error}`);
             addToast({ message: `Failed to load: ${title}`, type: 'error' }); 
         } 
-        finally { setLoading("shopScroller", false); }
+        finally { setLoading(loadingKey, false); }
     }
 
     useEffect(() => { loadPreviewItems(); }, []);
@@ -37,7 +38,7 @@ export default function ShopScroller({ title, view }) {
     return (
         <div className="p-4 flex text-center items-center justify-center">
             <Scroller title={title}>
-                {loading.shopScroller ? ( <p>Loading Preview...</p> ) : (
+                {loading[loadingKey] ? ( <p>Loading Preview...</p> ) : (
                     items.map((item, index) => ( 
                         <ShopItem key={`${item.JewelleryID}-${index}`} item={item} />
                     ))
