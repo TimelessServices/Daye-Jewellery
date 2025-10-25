@@ -38,7 +38,20 @@ export function createStorageContext(config) {
                 if (cancelled) { return; }
 
                 if (result.success) {
-                    setItems(result.data);
+                    if (result.notFound) {
+                        const defaultValue = typeof initialValue === "object" && initialValue !== null
+                            ? (Array.isArray(initialValue) ? [...initialValue] : { ...initialValue })
+                            : initialValue;
+
+                        setItems(defaultValue);
+
+                        // Persist the default to storage to avoid re-running hydration logic
+                        if (typeof storage.set === "function") {
+                            storage.set(defaultValue);
+                        }
+                    } else {
+                        setItems(result.data);
+                    }
                 } else if (result?.error) {
                     console.error(`-- Load Error: ${result.error}`);
                 }
