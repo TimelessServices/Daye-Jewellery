@@ -21,22 +21,17 @@ export default function Shop() {
     const { addToast } = useToasts();
     const { openModal } = useModal();
     const { loading, setLoading } = useLoading();
-    const inFlightRef = useRef({ grid: false, loadMore: false });
-    const isMountedRef = useRef(false);
+    const loadingStatusRef = useRef({ grid: false, loadMore: false });
     const isGridLoading = loading['shopPage:gridLoad'];
     const isLoadMoreLoading = loading['shopPage:loadMore'];
 
     useEffect(() => {
-        isMountedRef.current = true;
+        loadingStatusRef.current.grid = isGridLoading;
+    }, [isGridLoading]);
 
-        return () => {
-            isMountedRef.current = false;
-            inFlightRef.current.grid = false;
-            inFlightRef.current.loadMore = false;
-            setLoading('shopPage:gridLoad', false);
-            setLoading('shopPage:loadMore', false);
-        };
-    }, [setLoading]);
+    useEffect(() => {
+        loadingStatusRef.current.loadMore = isLoadMoreLoading;
+    }, [isLoadMoreLoading]);
     
     const { filters, filterUpdaters, isHydrated } = useFilters();
     const itemsPerPage = 20;
@@ -47,10 +42,9 @@ export default function Shop() {
         clearGrid = false,
         filtersToUse = null
     ) => {
-        const guardKey = loadingKey === 'shopPage:loadMore' ? 'loadMore' : 'grid';
-        const guardState = inFlightRef.current;
-        if (guardState.grid || guardState.loadMore) return;
-
+        const { grid, loadMore } = loadingStatusRef.current;
+        if (grid || loadMore) return;
+        
         const activeFilters = filtersToUse || filters;
         if (!activeFilters) return;
 
@@ -72,13 +66,10 @@ export default function Shop() {
                 else { setItems(prev => [...prev, ...jewellery]); }
                 setHasMore(data.hasMore);
                 setPage(currentPage);
-            }
-        }
-        catch (error) { addToast({ message: 'Failed to load items', type: 'error' }); }
-        finally {
-            guardState[guardKey] = false;
-            setLoading(loadingKey, false);
-        }
+            } 
+        } 
+        catch (error) { addToast({ message: 'Failed to load items', type: 'error' }); } 
+        finally { setLoading(loadingKey, false); }
     }, [filters, setLoading, addToast]);
 
     useEffect(() => {
@@ -92,7 +83,7 @@ export default function Shop() {
 
     // Load more items
     const loadMore = useCallback(() => {
-        if (!inFlightRef.current.loadMore && hasMore) {
+        if (!loadingStatusRef.current.loadMore && hasMore) {
             loadItems('shopPage:loadMore', page + 1, false, filters);
         }
     }, [hasMore, page, loadItems, filters]);

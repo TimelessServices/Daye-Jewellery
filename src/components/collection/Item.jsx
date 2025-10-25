@@ -27,7 +27,7 @@ export function CollectionItem({ item }) {
 
                 {/* Pricing Info */}
                 <div className="text-center">
-                    {item.HasSet ? (<p>Get For: ${item.TotalPrice}</p>) : ""}
+                    {item.HasSet ? (<p>Get For: ${item.SetPrice}</p>) : ""}
                     {item.HasSale ? (<p>Items at {item.SaleDiscount}% off</p>) : ""}
                     {item.HasDeal ? (<p>Buy {item.BuyQuantity}, Get {item.GetQuantity} {item.DealDiscount}% off</p>) : ""}
                 </div>
