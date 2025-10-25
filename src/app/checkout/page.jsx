@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/Button";
@@ -7,6 +7,7 @@ import { useCart } from "@/contexts/AppProvider";
 import { useToasts } from "@/contexts/UIProvider";
 import ReviewItem from "@/components/checkout/ReviewItem";
 import MultiSelect from "@/components/checkout/MultiSelect";
+import { flattenCartEntries } from "@/utils/cartTransform";
 
 import CustomerView from "@/components/checkout/CustomerView";
 import ShippingView from "@/components/checkout/ShippingView";
@@ -71,6 +72,8 @@ export default function Checkout() {
         router.push('/payment');
     }
 
+    const reviewEntries = useMemo(() => flattenCartEntries(cart), [cart]);
+
     return (
         <section className="max-w-3xl mx-auto py-10 px-4 gap-12 flex flex-col">
             <div className="border-b-2 border-dark">
@@ -82,8 +85,22 @@ export default function Checkout() {
                 <h2 className="text-xl font-semibold">Review Your Items</h2>
 
                 <div className="divide-y">
-                    {cart.length === 0 ? ( <div className="p-8 text-center text-dark/70">Your cart is empty.</div> ) : 
-                        ( cart.map(item => ( <ReviewItem key={`${item.itemId}-${item.size}`} item={item} /> )) )}
+                    {reviewEntries.length === 0 ? (
+                        <div className="p-8 text-center text-dark/70">Your cart is empty.</div>
+                    ) : (
+                        reviewEntries.map((entry) => (
+                            <ReviewItem
+                                key={entry.key}
+                                item={{
+                                    price: entry.unitPrice,
+                                    quantity: entry.quantity,
+                                    desc: entry.label,
+                                    size: entry.subtitle || entry.size,
+                                    type: entry.data?.type || (entry.bucket === 'set' ? 'S' : entry.bucket === 'deal' ? 'D' : 'I')
+                                }}
+                            />
+                        ))
+                    )}
                 </div>
             </section>
 
