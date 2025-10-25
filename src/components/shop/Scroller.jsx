@@ -17,10 +17,18 @@ export default function ShopScroller({ title, view }) {
         try {
             const params = new URLSearchParams({ view });
             const data = await cachedFetch(`/api/preview?${params}`);
+            console.log(`-- ${view} Data: `, data);
 
-            if (data.success) { setItems(JSON_ToJewellery(data.results)); }
+            if (data.success) { 
+                console.log(`-- ${title} ITEMS: `, data.results);
+                setItems(JSON_ToJewellery(data.results)); 
+            }
+            else { throw new Error(data.error); }
         } 
-        catch (error) { addToast({ message: `Failed to load: ${title}`, type: 'error' }); } 
+        catch (error) { 
+            console.error(`-- Preview Error: ${error}`);
+            addToast({ message: `Failed to load: ${title}`, type: 'error' }); 
+        } 
         finally { setLoading("shopScroller", false); }
     }
 

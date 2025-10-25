@@ -2,7 +2,7 @@ import { queryDB } from "@/utils/Database";
 
 export async function GET() {
     try {
-        const deals = await queryDB("SELECR * FROM vw_ActiveDeals");  
+        const deals = await queryDB("SELECT * FROM vw_ActiveDeals");  
         return Response.json({ success: true, results: deals });
     } catch (error) {
         console.error("Collections query failed:", error);

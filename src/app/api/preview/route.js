@@ -1,5 +1,4 @@
 import { queryDB } from "@/utils/Database";
-import { Jewellery } from "@/class/Jewellery";
 
 export async function GET(request) {
     try {
