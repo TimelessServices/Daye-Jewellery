@@ -16,8 +16,8 @@ export const wishlistConfig = {
         },
         clear: () => ({}),
         custom: {
-            addToWishlist: (wishlist, ops) => (id, item) => ops.add(wishlist, id, item),
-            removeFromWishlist: (wishlist, ops) => (id) => ops.remove(wishlist, id),
+            addToWishlist: (_, ops) => (id, item) => ops.add(id, item),
+            removeFromWishlist: (_, ops) => (id) => ops.remove(id),
             isInWishlist: (wishlist) => (id) => !!wishlist[id],
             wishlistCount: (wishlist) => Object.keys(wishlist).length,
             getWishlistItems: (wishlist) => () => {

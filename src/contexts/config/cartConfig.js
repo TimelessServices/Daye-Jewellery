@@ -61,10 +61,10 @@ export const cartConfig = {
         update: (cart, type, key, newQuantity) => update(cart, type, key, newQuantity),
         clear: () => ({ single: {}, set: {}, deal: {} }),
         custom: {
-            addToCart: (cart, ops) => (type, key, value) => ops.add(cart, type, key, value),
-            removeFromCart: (cart, ops) => (type, key) => ops.remove(cart, type, key),
-            updateCartQuantity: (cart, ops) => (type, key, qty) => ops.update(cart, type, key, qty),
-            clearCart: (cart, ops) => () => ops.clear()
+            addToCart: (_, ops) => (type, key, value) => ops.add(type, key, value),
+            removeFromCart: (_, ops) => (type, key) => ops.remove(type, key),
+            updateCartQuantity: (_, ops) => (type, key, qty) => ops.update(type, key, qty),
+            clearCart: (_, ops) => () => ops.clear()
         }
     }
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
 import { cachedFetch } from '@/utils/RequestCache';
@@ -26,29 +26,49 @@ export default function ShopCollection() {
     // Set CollectionGrid Variables
     const [collection, setCollection] = useState(null);
     const [items, setItems] = useState([]);
+    const activeRequestRef = useRef(null);
 
     useEffect(() => {
-        async function fetchCollectionItems() {
-            if (!CollectionID || loading['collectionPage:items']) return;
-            setLoading('collectionPage:items', true)
-            
+        if (!CollectionID) return;
+
+        const requestId = Symbol('collectionPage:items');
+        activeRequestRef.current = requestId;
+        setLoading('collectionPage:items', true);
+        setCollection(null);
+        setItems([]);
+
+        let cancelled = false;
+
+        const fetchCollectionItems = async () => {
             try {
                 const params = new URLSearchParams({ collectionID: CollectionID });
                 const data = await cachedFetch(`/api/collections/items?${params}`);
 
-                if (data.success) {
+                if (!cancelled && activeRequestRef.current === requestId && data.success) {
                     setCollection(data.collection[0]);
-                    setItems(JSON_ToJewellery(data.items)); 
+                    setItems(JSON_ToJewellery(data.items));
                 }
             } catch (error) {
-                console.error('Failed to load collection items:', error);
+                if (!cancelled && activeRequestRef.current === requestId) {
+                    console.error('Failed to load collection items:', error);
+                }
             } finally {
-                setLoading('collectionPage:items', false)
+                if (!cancelled && activeRequestRef.current === requestId) {
+                    setLoading('collectionPage:items', false);
+                    activeRequestRef.current = null;
+                }
             }
-        }
+        };
 
         fetchCollectionItems();
-    }, [CollectionID, loading['collectionPage:items'], setLoading]);
+
+        return () => {
+            cancelled = true;
+            if (activeRequestRef.current === requestId) {
+                activeRequestRef.current = null;
+            }
+        };
+    }, [CollectionID, setLoading]);
 
     // Set Cart
     const handleToCart = () => {

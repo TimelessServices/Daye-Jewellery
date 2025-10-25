@@ -22,6 +22,7 @@ export default function Shop() {
     const { openModal } = useModal();
     const { loading, setLoading } = useLoading();
     const loadingStatusRef = useRef({ grid: false, loadMore: false });
+    const activeRequestsRef = useRef({});
     const isGridLoading = loading['shopPage:gridLoad'];
     const isLoadMoreLoading = loading['shopPage:loadMore'];
 
@@ -42,34 +43,63 @@ export default function Shop() {
         clearGrid = false,
         filtersToUse = null
     ) => {
-        const { grid, loadMore } = loadingStatusRef.current;
-        if (grid || loadMore) return;
-        
         const activeFilters = filtersToUse || filters;
         if (!activeFilters) return;
-        
-        setLoading(loadingKey, true);
-        
-        try {
-            const params = new URLSearchParams({
-                filters: JSON.stringify(activeFilters),
-                page: currentPage.toString(),
-                limit: itemsPerPage.toString()
-            });
-            const data = await cachedFetch(`/api/jewellery?${params}`)
 
-            if (data.success) {
-                const jewellery = JSON_ToJewellery(data.results);
+        const signature = JSON.stringify({
+            page: currentPage,
+            filters: activeFilters
+        });
 
-                if (clearGrid) { setItems(jewellery); } 
-                else { setItems(prev => [...prev, ...jewellery]); }
-                setHasMore(data.hasMore);
-                setPage(currentPage);
-            } 
-        } 
-        catch (error) { addToast({ message: 'Failed to load items', type: 'error' }); } 
-        finally { setLoading(loadingKey, false); }
-    }, [filters, setLoading, addToast]);
+        const existingRequest = activeRequestsRef.current[loadingKey];
+        if (existingRequest?.signature === signature && existingRequest.status === 'pending') {
+            return existingRequest.promise;
+        }
+
+        const requestId = Symbol(`shopPage:${loadingKey}`);
+
+        const requestPromise = (async () => {
+            setLoading(loadingKey, true);
+
+            try {
+                const params = new URLSearchParams({
+                    filters: JSON.stringify(activeFilters),
+                    page: currentPage.toString(),
+                    limit: itemsPerPage.toString()
+                });
+                const data = await cachedFetch(`/api/jewellery?${params}`);
+
+                if (data.success && activeRequestsRef.current[loadingKey]?.id === requestId) {
+                    const jewellery = JSON_ToJewellery(data.results);
+
+                    if (clearGrid) { setItems(jewellery); }
+                    else { setItems(prev => [...prev, ...jewellery]); }
+                    setHasMore(data.hasMore);
+                    setPage(currentPage);
+                }
+            }
+            catch (error) {
+                if (activeRequestsRef.current[loadingKey]?.id === requestId) {
+                    addToast({ message: 'Failed to load items', type: 'error' });
+                }
+            }
+            finally {
+                if (activeRequestsRef.current[loadingKey]?.id === requestId) {
+                    setLoading(loadingKey, false);
+                    delete activeRequestsRef.current[loadingKey];
+                }
+            }
+        })();
+
+        activeRequestsRef.current[loadingKey] = {
+            id: requestId,
+            signature,
+            status: 'pending',
+            promise: requestPromise
+        };
+
+        return requestPromise;
+    }, [filters, setLoading, addToast, itemsPerPage]);
 
     useEffect(() => {
         if (filters && isHydrated) {
