@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { useLoading } from '@/contexts/UIProvider';
 import { ArrowLeft, BadgePercent, ShoppingBag } from 'lucide-react';
+import { formatCurrency } from "@/utils/formatCurrency";
 
 function ColType(hasSet, hasSale, hasDeal) {
     const types = [
@@ -12,11 +13,11 @@ function ColType(hasSet, hasSale, hasDeal) {
     return types.join(" | ");
 }
 
-function ActionButton(type, onClick, loadType) {
+function ActionButton({ type, onClick, loadType, itemsLength }) {
     const clickTxt = type === "set" ? "Buy Set" : "Configure Deal";
-    
+
     return (
-        <button onClick={onClick} disabled={loadType || itemsLength === 0} 
+        <button onClick={onClick} disabled={loadType || itemsLength === 0}
             className={`gap-2 p-2 flex items-center justify-center border-2 border-dark rounded-lg text-sm animate
                 hover:bg-dark hover:text-light ${loadType ? 'opacity-50' : ''}`}>
             {type === "set" ? <ShoppingBag size={18} /> : <BadgePercent size={18} />}
@@ -50,8 +51,18 @@ export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
 
                 {/* Collection Actions */}
                 <div className='flex flex-row items-center gap-4'>
-                    {ActionButton("set", toCart, loading['collectionHeader:addSetToCart'])}
-                    {ActionButton("deal", toFave, loading['collectionHeader:addDealToWishlist'])}
+                    <ActionButton
+                        type="set"
+                        onClick={toCart}
+                        loadType={loading['collectionHeader:addSetToCart']}
+                        itemsLength={itemsLength}
+                    />
+                    <ActionButton
+                        type="deal"
+                        onClick={toFave}
+                        loadType={loading['collectionHeader:addDealToWishlist']}
+                        itemsLength={itemsLength}
+                    />
                 </div>
             </div>
 
@@ -63,8 +74,11 @@ export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
                 </div>
                 
                 <div>
-                    {item.HasSet ? (<p className="text-md font-semibold text-dark pt-1">
-                        Collection Price: ${item.TotalPrice}</p>) : ""}
+                    {item.HasSet ? (
+                        <p className="text-md font-semibold text-dark pt-1">
+                            Collection Price: {formatCurrency(item.TotalPrice)}
+                        </p>
+                    ) : ""}
 
                     {item.HasSale ? (<p className="text-sm text-green-600 font-medium">
                             Individual Items at {item.SaleDiscount}% off</p>) : ""}

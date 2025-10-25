@@ -79,18 +79,22 @@ export function FilterModal({ isOpen, filters, updaters, closeModal }) {
     const handleApply = () => {
         if (tempManager) {
             const changes = tempManager.getChanges();
-            
-            Object.entries(changes).forEach(([key, value]) => {
-                switch (key) {
-                    case 'search': updaters.updateSearch(value); break;
-                    case 'sort': updaters.updateSort(value); break;
-                    case 'price': updaters.updatePrice(value.min, value.max); break;
-                    case 'types': updaters.updateTypes(value); break;
-                    case 'onSale': updaters.updateOnSale(value); break;
-                    case 'material': updaters.updateMaterial(value); break;
-                    case 'gem': updaters.updateGem(value); break;
-                }
-            });
+
+            if (updaters.applyChanges) {
+                updaters.applyChanges(changes);
+            } else {
+                Object.entries(changes).forEach(([key, value]) => {
+                    switch (key) {
+                        case 'search': updaters.updateSearch(value); break;
+                        case 'sort': updaters.updateSort(value); break;
+                        case 'price': updaters.updatePrice(value.min, value.max); break;
+                        case 'types': updaters.updateTypes(value); break;
+                        case 'onSale': updaters.updateOnSale(value); break;
+                        case 'material': updaters.updateMaterial(value); break;
+                        case 'gem': updaters.updateGem(value); break;
+                    }
+                });
+            }
         }
         closeModal();
     };

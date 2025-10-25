@@ -8,6 +8,7 @@ import { useCart } from "@/contexts/AppProvider";
 import { CartSet } from "./CartSet";
 import { CartItem } from "./CartItem";
 import { CartDeal } from "./CartDeal";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 export const CartContent = memo(function CartContent({ showTitle = false, className = "" }) {
     const router = useRouter();
@@ -15,10 +16,10 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
     const { cart, removeFromCart, cartCount, cartTotal, updateCartQuantity } = useCart();
 
     // Check if cart is empty by checking all object types
-    const isEmpty = 
-        Object.keys(cart.single).length === 0 && 
-        Object.keys(cart.set).length === 0 && 
-        Object.keys(cart.deals).length === 0;
+    const isEmpty =
+        Object.keys(cart.single).length === 0 &&
+        Object.keys(cart.set).length === 0 &&
+        Object.keys(cart.deal).length === 0;
 
     if (isEmpty) {
         return (
@@ -50,14 +51,14 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
                 ))}
 
                 {/* Render deals */}
-                {Object.entries(cart.deals).map(([id, deal]) => (
-                    <CartDeal key={`deal-${id}`}  deal={deal} onRemove={() => removeFromCart('deals', id)} />
+                {Object.entries(cart.deal).map(([id, deal]) => (
+                    <CartDeal key={`deal-${id}`}  deal={deal} onRemove={() => removeFromCart('deal', id)} />
                 ))}
             </div>
             
             <div className="mt-2 pt-4 space-y-4 border-t-1 border-dark">
                 <p className="text-center">
-                    Total: <span className="font-semibold">${cartTotal.toFixed(2)}</span>
+                    Total: <span className="font-semibold">{formatCurrency(cartTotal)}</span>
                 </p>
                 <Button text="Checkout" onClick={toCheckout} className="w-full" />
             </div>

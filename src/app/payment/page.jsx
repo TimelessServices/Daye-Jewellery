@@ -20,6 +20,7 @@ export default function Payment() {
     const [movingToSuccess, setMovingToSuccess] = useState(false);  
     const [hasShownError, setHasShownError] = useState(false);  
     const orderSummary = getOrderSummary();
+    const summaryItems = orderSummary.items || [];
 
     useEffect(() => {
         if (hasShownError || movingToSuccess) return;
@@ -101,19 +102,24 @@ export default function Payment() {
                     
                     {/* Items */}
                     <div className="space-y-3 mb-6">
-                        {cart.map(item => (
-                            <div key={`${item.itemId}-${item.size}`} className="flex justify-between items-center">
-                                <div>
-                                    <div className="font-medium">{item.desc}</div>
-                                    <div className="text-sm text-gray-600">
-                                        Size: {item.size} • Qty: {item.quantity}
+                        {summaryItems.length === 0 ? (
+                            <div className="text-sm text-gray-600">Your cart is empty.</div>
+                        ) : (
+                            summaryItems.map((entry) => (
+                                <div key={entry.key} className="flex justify-between items-center">
+                                    <div>
+                                        <div className="font-medium">{entry.label}</div>
+                                        <div className="text-sm text-gray-600 space-y-0.5">
+                                            <div>{entry.subtitle || `Size: ${entry.size}`}</div>
+                                            <div>Qty: {entry.quantity}</div>
+                                        </div>
+                                    </div>
+                                    <div className="font-medium">
+                                        ${entry.totalPrice.toFixed(2)}
                                     </div>
                                 </div>
-                                <div className="font-medium">
-                                    ${(item.price * item.quantity).toFixed(2)}
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
 
                     {/* Totals */}
