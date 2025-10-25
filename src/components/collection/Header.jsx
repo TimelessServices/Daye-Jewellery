@@ -50,8 +50,8 @@ export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
 
                 {/* Collection Actions */}
                 <div className='flex flex-row items-center gap-4'>
-                    {ActionButton("set", toCart, loading.toCart)}
-                    {ActionButton("deal", toFave, loading.toFave)}
+                    {ActionButton("set", toCart, loading['collectionHeader:addSetToCart'])}
+                    {ActionButton("deal", toFave, loading['collectionHeader:addDealToWishlist'])}
                 </div>
             </div>
 

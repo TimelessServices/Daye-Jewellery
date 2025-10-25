@@ -29,8 +29,8 @@ export default function ShopCollection() {
 
     useEffect(() => {
         async function fetchCollectionItems() {
-            if (!CollectionID || loading.collectionItems) return;
-            setLoading('collectionItems', true)
+            if (!CollectionID || loading['collectionPage:items']) return;
+            setLoading('collectionPage:items', true)
             
             try {
                 const params = new URLSearchParams({ collectionID: CollectionID });
@@ -43,12 +43,12 @@ export default function ShopCollection() {
             } catch (error) {
                 console.error('Failed to load collection items:', error);
             } finally {
-                setLoading('collectionItems', false)
+                setLoading('collectionPage:items', false)
             }
         }
 
         fetchCollectionItems();
-    }, [CollectionID]);
+    }, [CollectionID, loading['collectionPage:items'], setLoading]);
 
     // Set Cart
     const handleToCart = () => {
@@ -62,7 +62,7 @@ export default function ShopCollection() {
         console.log("--AddToFave: Deal With That");
     }
 
-    if (loading.collectionItems) return <div className="section">Loading Collection...</div>;
+    if (loading['collectionPage:items']) return <div className="section">Loading Collection...</div>;
     if (!collection) return <div className='section'>No Collection Found</div>;
     if (items.length === 0) return <div className='section'>No Items Found</div>;
 
@@ -70,10 +70,10 @@ export default function ShopCollection() {
         <section className="w-full h-7/8 p-8">
             <CollectionHead item={collection} itemsLength={items.length} toCart={handleToCart} toFave={handleToFave} />
 
-            {loading.collectionItems ? ( <p className="text-center py-8 text-dark">Loading collection items...</p> ) : (
+            {loading['collectionPage:items'] ? ( <p className="text-center py-8 text-dark">Loading collection items...</p> ) : (
                 <ShopGrid items={items} /> )}
 
-            {!loading.collectionItems && items.length === 0 && (
+            {!loading['collectionPage:items'] && items.length === 0 && (
                 <p className="text-center py-8 text-dark">No items found in this collection</p>
             )}
         </section>

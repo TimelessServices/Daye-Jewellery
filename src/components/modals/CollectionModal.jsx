@@ -18,7 +18,7 @@ export function CollectionModal({ isOpen, collection, items, closeModal, onAddCo
     const { loading, setLoading } = useLoading();
     const { addToast } = useToasts();
 
-    const isAdding = loading.addingCollection;
+    const isAdding = loading['collectionModal:addToCart'];
     const modalRef = useRef(null);
 
     // Group items by type for bulk selection
@@ -101,7 +101,7 @@ export function CollectionModal({ isOpen, collection, items, closeModal, onAddCo
             return;
         }
 
-        setLoading('addingCollection', true);
+        setLoading('collectionModal:addToCart', true);
         
         try {
             // Call parent function with selections
@@ -118,7 +118,7 @@ export function CollectionModal({ isOpen, collection, items, closeModal, onAddCo
                 type: 'error' 
             });
         } finally {
-            setLoading('addingCollection', false);
+            setLoading('collectionModal:addToCart', false);
         }
     };
 

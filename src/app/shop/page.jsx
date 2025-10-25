@@ -1,6 +1,6 @@
 'use client';
 import { Search, Filter } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { Button } from '@/components/Button';
 import { cachedFetch } from "@/utils/RequestCache";
@@ -21,12 +21,29 @@ export default function Shop() {
     const { addToast } = useToasts();
     const { openModal } = useModal();
     const { loading, setLoading } = useLoading();
+    const loadingStatusRef = useRef({ grid: false, loadMore: false });
+    const isGridLoading = loading['shopPage:gridLoad'];
+    const isLoadMoreLoading = loading['shopPage:loadMore'];
+
+    useEffect(() => {
+        loadingStatusRef.current.grid = isGridLoading;
+    }, [isGridLoading]);
+
+    useEffect(() => {
+        loadingStatusRef.current.loadMore = isLoadMoreLoading;
+    }, [isLoadMoreLoading]);
     
     const { filters, filterUpdaters, isHydrated } = useFilters();
     const itemsPerPage = 20;
 
-    const loadItems = useCallback(async (loadingKey = "shopGrid", currentPage = 0, clearGrid = false, filtersToUse = null) => {
-        if (loading.shopGrid || loading.loadMore) return;
+    const loadItems = useCallback(async (
+        loadingKey = 'shopPage:gridLoad',
+        currentPage = 0,
+        clearGrid = false,
+        filtersToUse = null
+    ) => {
+        const { grid, loadMore } = loadingStatusRef.current;
+        if (grid || loadMore) return;
         
         const activeFilters = filtersToUse || filters;
         if (!activeFilters) return;
@@ -52,21 +69,23 @@ export default function Shop() {
         } 
         catch (error) { addToast({ message: 'Failed to load items', type: 'error' }); } 
         finally { setLoading(loadingKey, false); }
-    }, [loading.shopGrid, loading.loadMore, filters, setLoading, addToast]); 
+    }, [filters, setLoading, addToast]);
 
     useEffect(() => {
         if (filters && isHydrated) {
             setItems([]);
             setPage(0);
             setHasMore(true);
-            loadItems("shopGrid", 0, true, filters); 
+            loadItems('shopPage:gridLoad', 0, true, filters);
         }
     }, [filters, isHydrated, loadItems]);
 
     // Load more items
     const loadMore = useCallback(() => {
-        if (!loading.loadMore && hasMore) { loadItems("loadMore", page + 1, false, filters); }
-    }, [loading, hasMore, page, loadItems, filters]);
+        if (!loadingStatusRef.current.loadMore && hasMore) {
+            loadItems('shopPage:loadMore', page + 1, false, filters);
+        }
+    }, [hasMore, page, loadItems, filters]);
 
     const openFilterModal = () => {
         openModal('filters', {
@@ -104,12 +123,12 @@ export default function Shop() {
                 <div className='max-h-full p-8'>
                     <ShopGrid items={items} />
 
-                    {loading.shopGrid && <p>Loading...</p>}
+                    {isGridLoading && <p>Loading...</p>}
 
-                    {!loading.shopGrid && hasMore && items.length > 0 && ( 
-                        <div className='text-center py-8'> 
-                            <Button wd="w-full lg:w-1/3" text="Load More" onClick={loadMore} 
-                                disabled={loading.loadMore} loading={loading.loadMore} /> 
+                    {!isGridLoading && hasMore && items.length > 0 && (
+                        <div className='text-center py-8'>
+                            <Button wd="w-full lg:w-1/3" text="Load More" onClick={loadMore}
+                                disabled={isLoadMoreLoading} loading={isLoadMoreLoading} />
                         </div>
                     )}
 
