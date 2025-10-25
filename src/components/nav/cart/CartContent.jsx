@@ -8,6 +8,7 @@ import { useCart } from "@/contexts/AppProvider";
 import { CartSet } from "./CartSet";
 import { CartItem } from "./CartItem";
 import { CartDeal } from "./CartDeal";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 export const CartContent = memo(function CartContent({ showTitle = false, className = "" }) {
     const router = useRouter();
@@ -57,7 +58,7 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
             
             <div className="mt-2 pt-4 space-y-4 border-t-1 border-dark">
                 <p className="text-center">
-                    Total: <span className="font-semibold">${cartTotal.toFixed(2)}</span>
+                    Total: <span className="font-semibold">{formatCurrency(cartTotal)}</span>
                 </p>
                 <Button text="Checkout" onClick={toCheckout} className="w-full" />
             </div>
