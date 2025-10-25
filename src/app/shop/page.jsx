@@ -47,9 +47,10 @@ export default function Shop() {
         
         const activeFilters = filtersToUse || filters;
         if (!activeFilters) return;
-        
+
+        guardState[guardKey] = true;
         setLoading(loadingKey, true);
-        
+
         try {
             const params = new URLSearchParams({
                 filters: JSON.stringify(activeFilters),
@@ -58,10 +59,10 @@ export default function Shop() {
             });
             const data = await cachedFetch(`/api/jewellery?${params}`)
 
-            if (data.success) {
+            if (data.success && isMountedRef.current) {
                 const jewellery = JSON_ToJewellery(data.results);
 
-                if (clearGrid) { setItems(jewellery); } 
+                if (clearGrid) { setItems(jewellery); }
                 else { setItems(prev => [...prev, ...jewellery]); }
                 setHasMore(data.hasMore);
                 setPage(currentPage);
