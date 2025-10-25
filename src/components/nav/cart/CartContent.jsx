@@ -15,10 +15,10 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
     const { cart, removeFromCart, cartCount, cartTotal, updateCartQuantity } = useCart();
 
     // Check if cart is empty by checking all object types
-    const isEmpty = 
-        Object.keys(cart.single).length === 0 && 
-        Object.keys(cart.set).length === 0 && 
-        Object.keys(cart.deals).length === 0;
+    const isEmpty =
+        Object.keys(cart.single).length === 0 &&
+        Object.keys(cart.set).length === 0 &&
+        Object.keys(cart.deal).length === 0;
 
     if (isEmpty) {
         return (
@@ -50,8 +50,8 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
                 ))}
 
                 {/* Render deals */}
-                {Object.entries(cart.deals).map(([id, deal]) => (
-                    <CartDeal key={`deal-${id}`}  deal={deal} onRemove={() => removeFromCart('deals', id)} />
+                {Object.entries(cart.deal).map(([id, deal]) => (
+                    <CartDeal key={`deal-${id}`}  deal={deal} onRemove={() => removeFromCart('deal', id)} />
                 ))}
             </div>
             
