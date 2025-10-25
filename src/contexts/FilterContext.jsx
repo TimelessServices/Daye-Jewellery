@@ -60,12 +60,40 @@ export function FilterProvider({ children }) {
             }
             updateFilters(newFilters);
         };
-        
+
+        const applyChanges = (changes, updateUrl = true) => {
+            if (!changes || Object.keys(changes).length === 0) return;
+
+            const newFilters = { ...filters };
+
+            Object.entries(changes).forEach(([key, value]) => {
+                switch (key) {
+                    case 'price':
+                        newFilters.price = { ...value };
+                        break;
+                    case 'material':
+                        newFilters.material = Array.isArray(value) ? [...value] : value;
+                        newFilters.materialQuery = Array.isArray(newFilters.material) && newFilters.material.length > 0;
+                        break;
+                    case 'gem':
+                        newFilters.gem = Array.isArray(value) ? [...value] : value;
+                        newFilters.gemQuery = Array.isArray(newFilters.gem) && newFilters.gem.length > 0;
+                        break;
+                    default:
+                        newFilters[key] = value;
+                        break;
+                }
+            });
+
+            updateFilters(newFilters, updateUrl);
+        };
+
         return {
             updateSearch: createUpdater('search'),
             updateSort: createUpdater('sort'),
             updateTypes: createUpdater('types'),
             updateOnSale: createUpdater('onSale'),
+            applyChanges,
 
             updatePrice: (min, max) => {
                 const newFilters = { ...filters };
