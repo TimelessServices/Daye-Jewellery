@@ -17,9 +17,15 @@ const initialState = {
     
     // Loading states
     loading: {
-        checkout: false,
-        addingToCart: false,
-        search: false
+        'navPrimary:search': false,
+        'collectionPage:items': false,
+        'collectionModal:addToCart': false,
+        'itemModal:addToCart': false,
+        'itemModal:addToCartSuccess': false,
+        'shopPage:gridLoad': false,
+        'shopPage:loadMore': false,
+        'collectionHeader:addSetToCart': false,
+        'collectionHeader:addDealToWishlist': false
     },
     
     // Toast notifications

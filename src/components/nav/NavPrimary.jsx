@@ -33,9 +33,9 @@ export default function NavPrimary() {
 
     const handleSearchSubmit = async (e) => {
         e.preventDefault();
-        if (loading.search || !query.trim()) return;
-        
-        setLoading('search', true);
+        if (loading['navPrimary:search'] || !query.trim()) return;
+
+        setLoading('navPrimary:search', true);
         try {
             await navigateWithFilters({ search: query.trim() }, true);
             setQuery("");
@@ -44,7 +44,7 @@ export default function NavPrimary() {
             console.error('Search failed:', error);
             addToast({ message: 'Search failed. Please try again.', type: 'error' });
         } finally {
-            setLoading('search', false);
+            setLoading('navPrimary:search', false);
         }
     };
 
@@ -93,17 +93,17 @@ export default function NavPrimary() {
                         value={query} 
                         onChange={(e) => setQuery(e.target.value)} 
                         placeholder="Search"
-                        disabled={loading.search}
-                        className={`w-full py-2 outline-none placeholder:text-dark/50 ${loading.search ? 'opacity-50' : ''}`}
+                        disabled={loading['navPrimary:search']}
+                        className={`w-full py-2 outline-none placeholder:text-dark/50 ${loading['navPrimary:search'] ? 'opacity-50' : ''}`}
                     />
                     <button 
                         type="submit" 
-                        disabled={loading.search}
-                        className={`ml-2 ${loading.search ? 'opacity-50' : ''}`}
+                        disabled={loading['navPrimary:search']}
+                        className={`ml-2 ${loading['navPrimary:search'] ? 'opacity-50' : ''}`}
                     >
                         <Search 
                             size={20} 
-                            className={`text-dark ${loading.search ? 'animate-pulse' : ''}`} 
+                            className={`text-dark ${loading['navPrimary:search'] ? 'animate-pulse' : ''}`}
                         />
                     </button>
                 </form>
