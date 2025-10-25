@@ -86,7 +86,12 @@ export function FilterProvider({ children }) {
 
     // External navigation helper
     const navigateWithFilters = useCallback((targetFilters, resetExisting = false) => {
-        const baseFilters = resetExisting ? filterStorage.getDefaultFilters : filterStorage.getFilters();
+        let baseFilters;
+        if (resetExisting) {
+            baseFilters = filterStorage.getDefaultFilters;
+        } else {
+            baseFilters = filterStorage.getFilters();
+        }
         const newFilters = { ...baseFilters, ...targetFilters };
         
         setFilters(newFilters);

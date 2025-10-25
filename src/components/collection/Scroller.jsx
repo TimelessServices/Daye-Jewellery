@@ -1,4 +1,4 @@
-import { useState, useEffect, useId, useMemo } from 'react';
+import { useState, useEffect, useId, useMemo, useRef, useCallback } from 'react';
 import { Scroller } from "@/components/Scroller";
 
 import { CollectionItem } from './Item';
@@ -12,20 +12,44 @@ export default function CollectionScroller() {
     const { loading, setLoading } = useLoading();
     const instanceId = useId();
     const loadingKey = useMemo(() => `collectionScroller:${instanceId}`, [instanceId]);
+    const activeRequestRef = useRef(null);
 
-    const loadCollections = async () => {
-        if (loading[loadingKey]) return;
-        setLoading(loadingKey, true);
+    const loadCollections = useCallback(async () => {
+        if (activeRequestRef.current?.status === 'pending') {
+            return activeRequestRef.current.promise;
+        }
 
-        try {
-            const data = await cachedFetch('/api/collections/complex');
-            if (data.success) { setItems(data.results); }
-        } 
-        catch (error) { addToast({ message: 'Failed to load collections', type: 'error' }); } 
-        finally { setLoading(loadingKey, false); }
-    };
+        const requestId = Symbol(loadingKey);
+        const requestPromise = (async () => {
+            setLoading(loadingKey, true);
 
-    useEffect(() => { loadCollections(); }, []);
+            try {
+                const data = await cachedFetch('/api/collections/complex');
+                if (data.success && activeRequestRef.current?.id === requestId) { setItems(data.results); }
+            }
+            catch (error) {
+                if (activeRequestRef.current?.id === requestId) {
+                    addToast({ message: 'Failed to load collections', type: 'error' });
+                }
+            }
+            finally {
+                if (activeRequestRef.current?.id === requestId) {
+                    setLoading(loadingKey, false);
+                    activeRequestRef.current = null;
+                }
+            }
+        })();
+
+        activeRequestRef.current = {
+            id: requestId,
+            status: 'pending',
+            promise: requestPromise
+        };
+
+        return requestPromise;
+    }, [addToast, loadingKey, setLoading]);
+
+    useEffect(() => { loadCollections(); }, [loadCollections]);
 
     return (
         <div className="p-4 flex text-center items-center justify-center">
