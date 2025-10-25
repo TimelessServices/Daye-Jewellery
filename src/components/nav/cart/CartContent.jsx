@@ -38,7 +38,7 @@ export const CartContent = memo(function CartContent({ showTitle = false, classN
                 </div>
             )}
             
-            <div className="p-2 flex-1 overflow-y-auto divide-y divide-dark/10">
+            <div className="p-2 gap-4 flex flex-col flex-1 overflow-y-auto">
                 {/* Render single items */}
                 {Object.entries(cart.single).map(([key, item]) => (
                     <CartItem  key={`single-${key}`}  item={item} onRemove={() => removeFromCart('single', key)}
