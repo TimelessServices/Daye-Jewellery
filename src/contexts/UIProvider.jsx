@@ -19,7 +19,7 @@ const initialState = {
     loading: {
         'navPrimary:search': false,
         'collectionPage:items': false,
-        'collectionModal:addToCart': false,
+        'setModal:addToCart': false,
         'itemModal:addToCart': false,
         'itemModal:addToCartSuccess': false,
         'shopPage:gridLoad': false,
