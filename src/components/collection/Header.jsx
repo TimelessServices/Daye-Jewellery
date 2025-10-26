@@ -26,7 +26,7 @@ function ActionButton({ type, onClick, loadType, itemsLength }) {
     );
 }
 
-export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
+export default function CollectionHead({ item, itemsLength, onConfigureSet, onConfigureDeal }) {
     const { loading, setLoading } = useLoading();
 
     // Set Router to Shop/Collection Page
@@ -53,13 +53,13 @@ export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
                 <div className='flex flex-row items-center gap-4'>
                     <ActionButton
                         type="set"
-                        onClick={toCart}
+                        onClick={onConfigureSet}
                         loadType={loading['collectionHeader:addSetToCart']}
                         itemsLength={itemsLength}
                     />
                     <ActionButton
                         type="deal"
-                        onClick={toFave}
+                        onClick={onConfigureDeal}
                         loadType={loading['collectionHeader:addDealToWishlist']}
                         itemsLength={itemsLength}
                     />
