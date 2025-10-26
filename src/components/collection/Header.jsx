@@ -53,13 +53,13 @@ export default function CollectionHead({ item, itemsLength, onConfigureSet, onCo
                 <div className='flex flex-row items-center gap-4'>
                     <ActionButton
                         type="set"
-                        onClick={onConfigureSet}
+                        onClick={toCart}
                         loadType={loading['collectionHeader:addSetToCart']}
                         itemsLength={itemsLength}
                     />
                     <ActionButton
                         type="deal"
-                        onClick={onConfigureDeal}
+                        onClick={toFave}
                         loadType={loading['collectionHeader:addDealToWishlist']}
                         itemsLength={itemsLength}
                     />
