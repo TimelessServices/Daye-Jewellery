@@ -26,7 +26,7 @@ function ActionButton({ type, onClick, loadType, itemsLength }) {
     );
 }
 
-export default function CollectionHead({ item, itemsLength, onConfigureSet, onConfigureDeal }) {
+export default function CollectionHead({ item, itemsLength, toCart, toFave }) {
     const { loading, setLoading } = useLoading();
 
     // Set Router to Shop/Collection Page

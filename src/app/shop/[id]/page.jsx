@@ -13,7 +13,7 @@ import CollectionHead from '@/components/collection/Header';
 export default function ShopCollection() {
     const { addToast } = useToasts();
     const { loading, setLoading } = useLoading();
-    
+
     // Get CollectionID
     const params = useParams();
     const CollectionID = params.id;
@@ -70,24 +70,17 @@ export default function ShopCollection() {
         };
     }, [CollectionID, setLoading]);
 
-    const { openModal } = useModal();
+    // Set Cart
+    const handleToCart = () => {
+        addToast({ message: "Adding to Cart. Probably?", type: "success" });
+        console.log("--AddToCart: Deal With That");
+    }
 
-    const handleConfigureSet = () => {
-        if (!collection || items.length === 0) {
-            addToast({ message: 'This collection has no items to configure', type: 'warning' });
-            return;
-        }
-
-        openModal(`set-${CollectionID}`, {
-            type: 'set',
-            collection,
-            items
-        });
-    };
-
-    const handleConfigureDeal = () => {
-        addToast({ message: 'Deal configuration coming soon', type: 'info' });
-    };
+    // Set Fave
+    const handleToFave = () => {
+        addToast({ message: "Adding to Favourites. Probably?", type: "success" });
+        console.log("--AddToFave: Deal With That");
+    }
 
     if (loading['collectionPage:items']) return <div className="section">Loading Collection...</div>;
     if (!collection) return <div className='section'>No Collection Found</div>;
@@ -95,12 +88,7 @@ export default function ShopCollection() {
 
     return (
         <section className="w-full h-7/8 p-8">
-            <CollectionHead
-                item={collection}
-                itemsLength={items.length}
-                onConfigureSet={handleConfigureSet}
-                onConfigureDeal={handleConfigureDeal}
-            />
+            <CollectionHead item={collection} itemsLength={items.length} toCart={handleToCart} toFave={handleToFave} />
 
             {loading['collectionPage:items'] ? ( <p className="text-center py-8 text-dark">Loading collection items...</p> ) : (
                 <ShopGrid items={items} /> )}

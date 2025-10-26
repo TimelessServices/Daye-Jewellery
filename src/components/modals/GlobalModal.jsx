@@ -3,7 +3,7 @@ import { useModal } from '@/contexts/UIProvider';
 
 import { ItemModal } from './ItemModal';
 import { FilterModal } from './FilterModal';
-import { SetModal } from './SetModal';
+import { CollectionModal } from './CollectionModal';
 
 export function GlobalModal() {
     const { modals, closeModal } = useModal();
@@ -33,19 +33,19 @@ export function GlobalModal() {
                             />
                         );
 
-                    case 'set':
                     case 'collection':
                         if (!modalProps.collection || !modalProps.items) {
-                            console.error('SetModal missing collection/items props:', modalId, modalProps);
+                            console.error('CollectionModal missing collection/items props:', modalId, modalProps);
                             return null;
                         }
                         return (
-                            <SetModal
+                            <CollectionModal 
                                 key={modalId}
                                 isOpen={true}
                                 collection={modalProps.collection}
                                 items={modalProps.items}
                                 closeModal={() => closeModal(modalId)}
+                                onAddCollection={modalProps.onAddCollection}
                             />
                         );
 
