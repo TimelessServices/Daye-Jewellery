@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCart } from '@/contexts/AppProvider';
 import { useToasts } from '@/contexts/UIProvider';
+import { flattenCartEntries, deriveOrderItemsFromEntries } from '@/utils/cartTransform';
 
 export function useOrderProcessing() {
     const [isProcessing, setIsProcessing] = useState(false);
@@ -11,7 +12,9 @@ export function useOrderProcessing() {
     const processOrder = async (customerData, shippingData, paymentMethod = 'mock') => {
         if (isProcessing) return;
 
-        if (cart.length === 0) {
+        const cartEntries = flattenCartEntries(cart);
+
+        if (cartEntries.length === 0) {
             addToast({ message: 'Cart is empty', type: 'error' });
             return { success: false, error: 'Empty cart' };
         }
@@ -22,12 +25,7 @@ export function useOrderProcessing() {
             const orderData = {
                 customer: customerData,
                 shipping: shippingData,
-                items: cart.map(item => ({
-                    jewelleryId: item.itemId,
-                    size: item.size,
-                    quantity: item.quantity,
-                    effectivePrice: item.price
-                })),
+                items: deriveOrderItemsFromEntries(cartEntries),
                 totalAmount: cartTotal,
                 paymentMethod
             };
@@ -59,9 +57,12 @@ export function useOrderProcessing() {
     };
 
     const getOrderSummary = () => {
+        const entries = flattenCartEntries(cart);
+        const itemCount = entries.reduce((sum, entry) => sum + entry.quantity, 0);
+
         return {
-            items: cart,
-            itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
+            items: entries,
+            itemCount,
             subtotal: cartTotal,
             tax: cartTotal * 0.10,
             shipping: cartTotal > 100 ? 0 : 15,
