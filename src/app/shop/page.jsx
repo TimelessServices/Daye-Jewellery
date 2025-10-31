@@ -162,11 +162,11 @@ export default function Shop() {
                         </div>
                     )}
 
-                    {!hasMore && items.length > 0 && ( 
+                    {!isGridLoading && !hasMore && items.length > 0 && ( 
                         <p className="text-center py-8 text-dark">All Items Loaded</p> 
                     )}
 
-                    {items.length === 0 && (
+                    {!isGridLoading && items.length === 0 && (
                         <p className="text-center py-8 text-dark">No Items Found</p>
                     )}
                 </div>

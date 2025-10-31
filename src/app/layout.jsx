@@ -33,17 +33,17 @@ export default function RootLayout({ children }) {
 						<p className="text-lg">Please Be Patient</p>
 					</div>
 				}>
-                                        <UIProvider>
-                                                <AppProvider>
-                                                        <NavController />
-                                                        <main className="flex-1"> {children} </main>
-                                                        <Footer />
+						<UIProvider>
+								<AppProvider>
+										<NavController />
+										<main className="flex-1"> {children} </main>
+										<Footer />
 
-                                                        <GlobalModal />
-                                                        <ToastContainer />
-                                                </AppProvider>
-                                        </UIProvider>
-                                </Suspense>
+										<GlobalModal />
+										<ToastContainer />
+								</AppProvider>
+						</UIProvider>
+				</Suspense>
 			</body>
 		</html>
 	);
