@@ -138,11 +138,34 @@ export function FilterProvider({ children }) {
     }, [router]);
 
     // Simplified preset filters
-    const presetFilters = useMemo(() => ({
-        filterByType: (type) => navigateWithFilters({ types: [type] }, true),
-        filterOnSale: () => navigateWithFilters({ onSale: true }, true),
-        filterBestSellers: () => navigateWithFilters({ sort: "bestsellers" }, true),
-    }), [navigateWithFilters]);
+    const presetFilters = useMemo(() => {
+        const allTypes = ["Necklace", "Bracelet", "Ring", "Earring"];
+
+        const filterByType = (type) => {
+            if (!type) return navigateWithFilters({ types: allTypes }, true);
+            return navigateWithFilters({ types: [type] }, true);
+        };
+
+        const filterSaleByType = (type) => {
+            const types = type ? [type] : allTypes;
+            return navigateWithFilters({ types, onSale: true, sort: "sale_first" }, true);
+        };
+
+        return {
+            filterByType,
+            filterAllTypes: () => navigateWithFilters({ types: allTypes }, true),
+            filterOnSale: () => navigateWithFilters({ onSale: true, sort: "sale_first" }, true),
+            filterBestSellers: () => navigateWithFilters({ sort: "bestsellers" }, true),
+            filterNecklaces: () => filterByType("Necklace"),
+            filterBracelets: () => filterByType("Bracelet"),
+            filterRings: () => filterByType("Ring"),
+            filterEarrings: () => filterByType("Earring"),
+            filterSaleNecklaces: () => filterSaleByType("Necklace"),
+            filterSaleBracelets: () => filterSaleByType("Bracelet"),
+            filterSaleRings: () => filterSaleByType("Ring"),
+            filterSaleEarrings: () => filterSaleByType("Earring"),
+        };
+    }, [navigateWithFilters]);
 
     const value = useMemo(() => ({
         filters,
