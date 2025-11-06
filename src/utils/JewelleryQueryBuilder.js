@@ -101,12 +101,24 @@ class JewelryQueryBuilder {
         }
     }
 
+    getSaleDiscountExpression() {
+        return 'CASE WHEN OnSale = 1 AND Price > 0 AND BestSalePrice IS NOT NULL '
+            + 'THEN (Price - BestSalePrice) / Price ELSE 0 END';
+    }
+
+    getSalePriorityExpression() {
+        return 'CASE WHEN OnSale = 1 THEN 0 ELSE 1 END';
+    }
+
     getSortClause(sortValue) {
+        const saleDiscountExpr = this.getSaleDiscountExpression();
+        const salePriorityExpr = this.getSalePriorityExpression();
+
         switch (sortValue) {
             // Price sorting
-            case 'price_asc': 
+            case 'price_asc':
                 return 'ORDER BY Price ASC';
-            case 'price_desc': 
+            case 'price_desc':
                 return 'ORDER BY Price DESC';
             
             // Popularity sorting
@@ -158,18 +170,21 @@ class JewelryQueryBuilder {
                 return 'ORDER BY Desc DESC';
             
             // Utility
-            case 'random': 
+            case 'random':
                 return 'ORDER BY RANDOM()';
-            
-            // TODO: Sale-related sorting (will be implemented via collections)
+
             case 'biggest_discount':
+                return `ORDER BY ${saleDiscountExpr} DESC, COALESCE(BestSalePrice, Price) ASC, AmountSold DESC`;
             case 'best_value':
+                return `ORDER BY COALESCE(BestSalePrice, Price) ASC, ${saleDiscountExpr} DESC, AmountSold DESC`;
             case 'sale_first':
+                return `ORDER BY ${salePriorityExpr} ASC, COALESCE(BestSalePrice, Price) ASC, AmountSold DESC`;
             case 'sale_best_deals':
+                return `ORDER BY ${saleDiscountExpr} DESC, AmountSold DESC, COALESCE(BestSalePrice, Price) ASC`;
             case 'clearance':
-                return 'ORDER BY AmountSold DESC, DateAdded DESC'; // Fallback
-            
-            default: 
+                return `ORDER BY ${salePriorityExpr} ASC, InStock ASC, COALESCE(BestSalePrice, Price) ASC`;
+
+            default:
                 return 'ORDER BY AmountSold DESC, DateAdded DESC';
         }
     }
@@ -188,6 +203,10 @@ class JewelryQueryBuilder {
         this.addTypeFilter(whereConditions, params, filters);
         this.addMaterialFilter(whereConditions, params, filters);
         this.addGemFilter(whereConditions, params, filters);
+
+        if (filters.onSale) {
+            whereConditions.push('(OnSale = 1 OR (BestSalePrice IS NOT NULL AND BestSalePrice < Price))');
+        }
 
         // TODO: Sale filtering will be implemented via collections
         // if (filters.onSale) {
