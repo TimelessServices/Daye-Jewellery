@@ -40,6 +40,18 @@ function mapDealItems(source, fallbackPrefix) {
             })
         );
     }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function mapDealItems(sources, fallbackPrefix) {
+    const result = {};
+    const sourceList = Array.isArray(sources) ? sources : [sources];
+
+    sourceList.forEach((source) => {
+        if (!source) {
+            return;
+        }
 
     const list = Array.isArray(source) ? source : [];
     const result = {};
@@ -129,6 +141,7 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
         CollectionID: collectionId,
         collectionName: name,
         Name: name,
+        name,
         buyQty,
         BuyQty: buyQty,
         buyQuantity: buyQty,
