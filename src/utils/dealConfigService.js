@@ -1,77 +1,138 @@
 import { cachedFetch } from '@/utils/RequestCache';
 import { createStorageManager } from '@/utils/Storage';
 
-const storage = createStorageManager("deal_data", "sessionStorage");
+const storage = createStorageManager('deal_data', 'sessionStorage');
 
-function mapDealItems(source, fallbackPrefix) {
-    const map = {};
-    if (source && typeof source === 'object' && !Array.isArray(source)) {
-        for (const [key, value] of Object.entries(source)) {
-            const itemKey = value?.itemKey ?? key;
-            map[itemKey] = { ...value, itemKey };
-        }
-        return map;
+function readFromStorage() {
+    const stored = storage.get();
+    if (stored?.success && Array.isArray(stored.data)) {
+        return stored.data;
     }
-
-    (Array.isArray(source) ? source : []).forEach((value, index) => {
-        const itemKey = value?.itemKey
-            ?? (value?.itemId ? `${value.itemId}_${value?.size ?? index}` : `${fallbackPrefix}-${index}`);
-        map[itemKey] = { ...value, itemKey };
-    });
-
-    return map;
+    return null;
 }
 
-function normalizeDealShape(existingDeal = {}, fetchedDeal) {
-    const collectionId = fetchedDeal?.CollectionID
+function toNumber(value, fallback = 0) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function mapDealItems(sources, fallbackPrefix) {
+    const result = {};
+    const sourceList = Array.isArray(sources) ? sources : [sources];
+
+    sourceList.forEach((source) => {
+        if (!source) {
+            return;
+        }
+
+        if (typeof source === 'object' && !Array.isArray(source)) {
+            Object.entries(source).forEach(([key, value]) => {
+                const itemKey = value?.itemKey ?? key;
+                result[itemKey] = { ...value, itemKey };
+            });
+            return;
+        }
+
+        if (Array.isArray(source)) {
+            const offset = Object.keys(result).length;
+            source.forEach((value, index) => {
+                const itemKey = value?.itemKey
+                    ?? (value?.itemId
+                        ? `${value.itemId}_${value?.size ?? index}`
+                        : `${fallbackPrefix}-${offset + index}`);
+                result[itemKey] = { ...value, itemKey };
+            });
+        }
+    });
+
+    return result;
+}
+
+function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
+    const collectionIdRaw = fetchedDeal?.CollectionID
+        ?? fetchedDeal?.collectionId
         ?? existingDeal.collectionId
         ?? existingDeal.collectionID
-        ?? existingDeal.CollectionID
-        ?? null;
+        ?? existingDeal.CollectionID;
 
+    if (!collectionIdRaw) {
+        return { ...existingDeal };
+    }
+
+    const collectionId = String(collectionIdRaw);
     const name = fetchedDeal?.Name
+        ?? fetchedDeal?.collectionName
+        ?? fetchedDeal?.name
         ?? existingDeal.collectionName
         ?? existingDeal.Name
         ?? existingDeal.name
-        ?? `Deal ${collectionId ?? ''}`.trim();
+        ?? `Deal ${collectionId}`;
 
-    const buyQtyRaw = fetchedDeal?.BuyQuantity
+    const buyQty = toNumber(
+        fetchedDeal?.BuyQuantity
+        ?? fetchedDeal?.BuyQty
+        ?? fetchedDeal?.buyQty
         ?? existingDeal.buyQty
         ?? existingDeal.BuyQty
         ?? existingDeal.buyQuantity
-        ?? 0;
-    const getQtyRaw = fetchedDeal?.GetQuantity
+    );
+
+    const getQty = toNumber(
+        fetchedDeal?.GetQuantity
+        ?? fetchedDeal?.GetQty
+        ?? fetchedDeal?.getQty
         ?? existingDeal.getQty
         ?? existingDeal.GetQty
         ?? existingDeal.getQuantity
-        ?? 0;
-    const discountRaw = fetchedDeal?.DealDiscount
+    );
+
+    const discount = toNumber(
+        fetchedDeal?.DealDiscount
+        ?? fetchedDeal?.Discount
+        ?? fetchedDeal?.dealDiscount
         ?? existingDeal.discount
         ?? existingDeal.Discount
         ?? existingDeal.dealDiscount
-        ?? 0;
-
-    const buyQty = Number(buyQtyRaw) || 0;
-    const getQty = Number(getQtyRaw) || 0;
-    const discount = Number(discountRaw) || 0;
-
-    const quantity = typeof existingDeal?.quantity === 'number' ? existingDeal.quantity : 1;
-    const totalPriceRaw = existingDeal?.totalPrice ?? existingDeal?.TotalPrice ?? existingDeal?.price ?? 0;
-    const totalPrice = typeof totalPriceRaw === 'number' ? totalPriceRaw : Number(totalPriceRaw) || 0;
-
-    const buyItemsMap = mapDealItems(
-        existingDeal?.buyItems
-        ?? existingDeal?.BuyItems
-        ?? fetchedDeal?.BuyItems,
-        `${collectionId || 'deal'}-buy`
     );
 
-    const getItemsMap = mapDealItems(
-        existingDeal?.getItems
-        ?? existingDeal?.GetItems
-        ?? fetchedDeal?.GetItems,
-        `${collectionId || 'deal'}-get`
+    const totalPrice = toNumber(
+        fetchedDeal?.TotalPrice
+        ?? fetchedDeal?.DealPrice
+        ?? fetchedDeal?.price
+        ?? existingDeal.totalPrice
+        ?? existingDeal.TotalPrice
+        ?? existingDeal.price
     );
+
+    const originalPrice = toNumber(
+        fetchedDeal?.OriginalPrice
+        ?? fetchedDeal?.originalPrice
+        ?? existingDeal.originalPrice,
+        0
+    );
+
+    const quantity = typeof existingDeal.quantity === 'number' ? existingDeal.quantity : 1;
+
+    const buyItems = mapDealItems([
+        fetchedDeal?.BuyItems,
+        fetchedDeal?.buyItems,
+        existingDeal.buyItems,
+        existingDeal.BuyItems,
+    ], `${collectionId}-buy`);
+    const getItems = mapDealItems([
+        fetchedDeal?.GetItems,
+        fetchedDeal?.getItems,
+        existingDeal.getItems,
+        existingDeal.GetItems,
+    ], `${collectionId}-get`);
+
+    const itemCount = fetchedDeal?.ItemCount
+        ?? fetchedDeal?.itemCount
+        ?? existingDeal.itemCount
+        ?? Object.keys(buyItems).length;
 
     return {
         ...existingDeal,
@@ -79,8 +140,8 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
         collectionID: collectionId,
         CollectionID: collectionId,
         collectionName: name,
-        name,
         Name: name,
+        name,
         buyQty,
         BuyQty: buyQty,
         buyQuantity: buyQty,
@@ -94,36 +155,42 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
         totalPrice,
         TotalPrice: totalPrice,
         price: totalPrice,
-        buyItems: buyItemsMap,
-        BuyItems: buyItemsMap,
-        getItems: getItemsMap,
-        GetItems: getItemsMap
+        originalPrice,
+        itemCount,
+        ItemCount: itemCount,
+        buyItems,
+        BuyItems: buyItems,
+        getItems,
+        GetItems: getItems
     };
 }
 
-export async function loadDeals() {
-    // Check sessionStorage first
-    const storageResponse = storage.get();
-    if (storageResponse?.success) {
-        console.log("Found deals in storage: ", storageResponse.data);
-        return storageResponse.data;
+export async function loadDeals({ forceRefresh = false } = {}) {
+    if (!forceRefresh) {
+        const cached = readFromStorage();
+        if (cached) {
+            return cached;
+        }
     }
 
     try {
-        const response = await cachedFetch('/api/collections/deals');
+        const params = new URLSearchParams({ limit: '15' });
+        const response = await cachedFetch(`/api/collections/deals?${params.toString()}`);
 
-        if (response.success) {
-            console.log("Deals fetched successfully");
-            storage.set(response.results);
-            return response.results;
-        } else {
-            throw new Error("Failed to load deals");
+        if (response.success && Array.isArray(response.results)) {
+            const normalized = response.results.map((deal) => normalizeDealShape({}, deal));
+            storage.set(normalized);
+            return normalized;
         }
+
+        throw new Error('Failed to load deals');
     } catch (error) {
         console.error('Error loading deals:', error);
         const fallback = readFromStorage();
-        if (fallback) { return fallback; }
-        return { deals: [], updatedAt: null, source: 'error', error };
+        if (fallback) {
+            return fallback;
+        }
+        return [];
     }
 }
 
@@ -136,14 +203,15 @@ export function syncCartDeals(
         return;
     }
 
+    const normalizedDeals = fetchedDeals.map((deal) => normalizeDealShape({}, deal));
     const currentDeals = cart?.deal ?? {};
     const fetchedDealMap = new Map(
-        fetchedDeals.map((deal) => [String(deal.CollectionID), deal])
+        normalizedDeals.map((deal) => [String(deal.CollectionID), deal])
     );
+
     const fetchedDealIds = new Set(fetchedDealMap.keys());
     const currentDealIds = new Set(Object.keys(currentDeals));
 
-    // Remove expired deals (in cart but not in fetched)
     for (const dealId of currentDealIds) {
         if (!fetchedDealIds.has(dealId)) {
             const dealName = currentDeals[dealId]?.Name ?? 'Deal';
@@ -157,22 +225,26 @@ export function syncCartDeals(
         }
     }
 
-    // Normalize existing deals to the expected shape
     if (typeof addToCart === 'function' && typeof removeFromCart === 'function') {
         for (const [dealId, currentDeal] of Object.entries(currentDeals)) {
-            if (!fetchedDealMap.has(dealId)) { continue; }
+            if (!fetchedDealMap.has(dealId)) {
+                continue;
+            }
 
             const fetchedDeal = fetchedDealMap.get(dealId);
             const normalized = normalizeDealShape(currentDeal, fetchedDeal);
-            const buyItemsValid = currentDeal?.buyItems
+
+            const hasValidBuyItems = currentDeal?.buyItems
                 && typeof currentDeal.buyItems === 'object'
                 && !Array.isArray(currentDeal.buyItems);
-            const needsNormalization =
-                currentDeal?.collectionName !== normalized.collectionName
-                || !buyItemsValid
-                || typeof currentDeal?.totalPrice !== 'number';
 
-            if (needsNormalization) {
+            const needsUpdate =
+                currentDeal?.collectionName !== normalized.collectionName
+                || !hasValidBuyItems
+                || typeof currentDeal?.totalPrice !== 'number'
+                || currentDeal.totalPrice !== normalized.totalPrice;
+
+            if (needsUpdate) {
                 const quantity = normalized.quantity || 1;
                 removeFromCart('deal', dealId);
                 addToCart('deal', dealId, { ...normalized, quantity });
@@ -181,20 +253,14 @@ export function syncCartDeals(
         }
     }
 
-    // Add new deals (in fetched but not in cart)
-    for (const deal of fetchedDeals) {
+    for (const deal of normalizedDeals) {
         const dealId = String(deal.CollectionID);
-        if (!currentDealIds.has(dealId)) {
-            const dealTemplate = normalizeDealShape({ quantity: 1 }, deal);
-
-            if (typeof addToCart === 'function') {
-                addToCart('deal', dealId, dealTemplate);
-            }
+        if (!currentDealIds.has(dealId) && typeof addToCart === 'function') {
+            addToCart('deal', dealId, { ...deal, quantity: deal.quantity ?? 1 });
             console.log(`Added new deal: ${deal.Name}`);
         }
     }
 
-    // Update storage to match cart's final state
-    storage.set(fetchedDeals);
-    console.log("Deal sync complete");
+    storage.set(normalizedDeals);
+    console.log('Deal sync complete');
 }

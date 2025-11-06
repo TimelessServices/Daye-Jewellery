@@ -27,11 +27,14 @@ export function flattenCartEntries(cart) {
     const sets = Object.entries(cart.set || {});
     for (const [key, set] of sets) {
         const quantity = typeof set?.quantity === "number" ? set.quantity : 1;
-        const unitPrice = typeof set?.totalPrice === "number"
+        const unitPriceSource = typeof set?.totalPrice === "number"
             ? set.totalPrice
-            : (typeof set?.Price === "number" ? set.Price : Number(set?.totalPrice || set?.Price) || 0);
+            : set?.TotalPrice ?? set?.Price ?? set?.SetPrice;
+        const unitPrice = typeof unitPriceSource === "number"
+            ? unitPriceSource
+            : Number(unitPriceSource) || 0;
         const itemCount = Array.isArray(set?.itemsList) ? set.itemsList.length : (set?.itemTotal || 0);
-        const desc = set?.collectionName || set?.Name || set?.name || `Set ${key}`;
+        const desc = set?.collectionName || set?.CollectionName || set?.Name || set?.name || `Set ${key}`;
         const size = itemCount > 0 ? `${itemCount} pcs` : (set?.size || "Set");
         const subtitle = itemCount > 0 ? `Set of ${itemCount} pieces` : undefined;
         entries.push({
@@ -51,17 +54,28 @@ export function flattenCartEntries(cart) {
     const deals = Object.entries(cart.deal || {});
     for (const [key, deal] of deals) {
         const quantity = typeof deal?.quantity === "number" ? deal.quantity : 1;
-        const unitPrice = typeof deal?.totalPrice === "number"
+        const unitPriceSource = typeof deal?.totalPrice === "number"
             ? deal.totalPrice
-            : Number(deal?.TotalPrice || deal?.price || 0) || 0;
-        const desc = deal?.collectionName || deal?.Name || deal?.name || `Deal ${key}`;
+            : deal?.TotalPrice ?? deal?.DealPrice ?? deal?.Price ?? deal?.price;
+        const unitPrice = typeof unitPriceSource === "number"
+            ? unitPriceSource
+            : Number(unitPriceSource) || 0;
+        const desc = deal?.collectionName
+            || deal?.CollectionName
+            || deal?.Name
+            || deal?.name
+            || `Deal ${key}`;
         const buyQty = deal?.buyQty ?? deal?.BuyQty ?? deal?.buyQuantity;
         const getQty = deal?.getQty ?? deal?.GetQty ?? deal?.getQuantity;
+        const discount = deal?.dealDiscount ?? deal?.DealDiscount ?? deal?.Discount;
         let subtitle;
         if (typeof buyQty === "number" || typeof getQty === "number") {
             const buyText = typeof buyQty === "number" ? buyQty : "?";
             const getText = typeof getQty === "number" ? getQty : "?";
             subtitle = `Deal: Buy ${buyText}, Get ${getText}`;
+            if (typeof discount === "number" && discount > 0) {
+                subtitle += ` @ ${discount}% off`;
+            }
         }
         entries.push({
             bucket: "deal",
