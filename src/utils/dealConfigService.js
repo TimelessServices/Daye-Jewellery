@@ -19,31 +19,6 @@ function toNumber(value, fallback = 0) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function readFromStorage() {
-    const stored = storage.get();
-    if (stored?.success && stored.data) {
-        return stored.data;
-    }
-    return null;
-}
-
-function mapDealItems(source, fallbackPrefix) {
-    if (!source) {
-        return {};
-    }
-
-    if (typeof source === 'object' && !Array.isArray(source)) {
-        return Object.fromEntries(
-            Object.entries(source).map(([key, value]) => {
-                const itemKey = value?.itemKey ?? key;
-                return [itemKey, { ...value, itemKey }];
-            })
-        );
-    }
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : fallback;
-}
-
 function mapDealItems(sources, fallbackPrefix) {
     const result = {};
     const sourceList = Array.isArray(sources) ? sources : [sources];
@@ -53,17 +28,30 @@ function mapDealItems(sources, fallbackPrefix) {
             return;
         }
 
-    const list = Array.isArray(source) ? source : [];
-    const result = {};
-    list.forEach((value, index) => {
-        const itemKey = value?.itemKey
-            ?? (value?.itemId ? `${value.itemId}_${value?.size ?? index}` : `${fallbackPrefix}-${index}`);
-        result[itemKey] = { ...value, itemKey };
+        if (typeof source === 'object' && !Array.isArray(source)) {
+            Object.entries(source).forEach(([key, value]) => {
+                const itemKey = value?.itemKey ?? key;
+                result[itemKey] = { ...value, itemKey };
+            });
+            return;
+        }
+
+        if (Array.isArray(source)) {
+            const offset = Object.keys(result).length;
+            source.forEach((value, index) => {
+                const itemKey = value?.itemKey
+                    ?? (value?.itemId
+                        ? `${value.itemId}_${value?.size ?? index}`
+                        : `${fallbackPrefix}-${offset + index}`);
+                result[itemKey] = { ...value, itemKey };
+            });
+        }
     });
+
     return result;
 }
 
-function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
+export function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
     const collectionIdRaw = fetchedDeal?.CollectionID
         ?? fetchedDeal?.collectionId
         ?? existingDeal.collectionId
@@ -77,8 +65,10 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
     const collectionId = String(collectionIdRaw);
     const name = fetchedDeal?.Name
         ?? fetchedDeal?.collectionName
+        ?? fetchedDeal?.name
         ?? existingDeal.collectionName
         ?? existingDeal.Name
+        ?? existingDeal.name
         ?? `Deal ${collectionId}`;
 
     const buyQty = toNumber(
@@ -126,43 +116,59 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
 
     const quantity = typeof existingDeal.quantity === 'number' ? existingDeal.quantity : 1;
 
-    const buyItems = mapDealItems(existingDeal.buyItems ?? existingDeal.BuyItems, `${collectionId}-buy`);
-    const getItems = mapDealItems(existingDeal.getItems ?? existingDeal.GetItems, `${collectionId}-get`);
+    const buyItems = mapDealItems([
+        fetchedDeal?.BuyItems,
+        fetchedDeal?.buyItems,
+        existingDeal.buyItems,
+        existingDeal.BuyItems,
+    ], `${collectionId}-buy`);
+    const getItems = mapDealItems([
+        fetchedDeal?.GetItems,
+        fetchedDeal?.getItems,
+        existingDeal.getItems,
+        existingDeal.GetItems,
+    ], `${collectionId}-get`);
 
     const itemCount = fetchedDeal?.ItemCount
         ?? fetchedDeal?.itemCount
         ?? existingDeal.itemCount
         ?? Object.keys(buyItems).length;
 
-    return {
+    const base = {
         ...existingDeal,
         collectionId,
-        collectionID: collectionId,
-        CollectionID: collectionId,
         collectionName: name,
-        Name: name,
         name,
         buyQty,
-        BuyQty: buyQty,
-        buyQuantity: buyQty,
         getQty,
-        GetQty: getQty,
-        getQuantity: getQty,
         discount,
-        Discount: discount,
-        dealDiscount: discount,
         quantity,
         totalPrice,
-        TotalPrice: totalPrice,
-        price: totalPrice,
         originalPrice,
         itemCount,
-        ItemCount: itemCount,
         buyItems,
-        BuyItems: buyItems,
         getItems,
-        GetItems: getItems
     };
+
+    const aliasGroups = [
+        ['collectionId', 'collectionID', 'CollectionID'],
+        ['collectionName', 'Name', 'name'],
+        ['buyQty', 'BuyQty', 'buyQuantity'],
+        ['getQty', 'GetQty', 'getQuantity'],
+        ['discount', 'Discount', 'dealDiscount'],
+        ['totalPrice', 'TotalPrice', 'price'],
+        ['itemCount', 'ItemCount'],
+        ['buyItems', 'BuyItems'],
+        ['getItems', 'GetItems'],
+    ];
+
+    aliasGroups.forEach(([primary, ...aliases]) => {
+        aliases.forEach((alias) => {
+            base[alias] = base[primary];
+        });
+    });
+
+    return base;
 }
 
 export async function loadDeals({ forceRefresh = false } = {}) {
