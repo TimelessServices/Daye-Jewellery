@@ -38,13 +38,12 @@ export function flattenCartEntries(cart) {
     const sets = Object.entries(cart.set || {});
     for (const [key, set] of sets) {
         const quantity = typeof set?.quantity === "number" ? set.quantity : 1;
-        const unitPrice = resolveNumber(
-            set?.totalPrice,
-            set?.TotalPrice,
-            set?.CollectionPrice,
-            set?.Price,
-            set?.SetPrice
-        );
+        const unitPriceSource = typeof set?.totalPrice === "number"
+            ? set.totalPrice
+            : set?.TotalPrice ?? set?.Price ?? set?.SetPrice;
+        const unitPrice = typeof unitPriceSource === "number"
+            ? unitPriceSource
+            : Number(unitPriceSource) || 0;
         const itemCount = Array.isArray(set?.itemsList) ? set.itemsList.length : (set?.itemTotal || 0);
         const desc = set?.collectionName || set?.CollectionName || set?.Name || set?.name || `Set ${key}`;
         const size = itemCount > 0 ? `${itemCount} pcs` : (set?.size || "Set");
@@ -67,14 +66,12 @@ export function flattenCartEntries(cart) {
     const deals = Object.entries(cart.deal || {});
     for (const [key, deal] of deals) {
         const quantity = typeof deal?.quantity === "number" ? deal.quantity : 1;
-        const unitPrice = resolveNumber(
-            deal?.totalPrice,
-            deal?.TotalPrice,
-            deal?.Price,
-            deal?.price,
-            deal?.DealPrice,
-            deal?.dealPrice
-        );
+        const unitPriceSource = typeof deal?.totalPrice === "number"
+            ? deal.totalPrice
+            : deal?.TotalPrice ?? deal?.DealPrice ?? deal?.Price ?? deal?.price;
+        const unitPrice = typeof unitPriceSource === "number"
+            ? unitPriceSource
+            : Number(unitPriceSource) || 0;
         const desc = deal?.collectionName
             || deal?.CollectionName
             || deal?.Name
