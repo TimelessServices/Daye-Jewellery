@@ -28,7 +28,7 @@ export function MenuProvider({ children }) {
         const fetchCollections = async () => {
             try {
                 setError(null);
-                const response = await cachedFetch('/api/collections/simple');
+                const response = await cachedFetch('/api/collections/simple?limit=5');
                 if (response.success) {
                     setCollections(response.results);
                 } else {
