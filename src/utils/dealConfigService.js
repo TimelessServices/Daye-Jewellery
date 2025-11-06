@@ -19,6 +19,14 @@ function toNumber(value, fallback = 0) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function readFromStorage() {
+    const stored = storage.get();
+    if (stored?.success && stored.data) {
+        return stored.data;
+    }
+    return null;
+}
+
 function mapDealItems(source, fallbackPrefix) {
     if (!source) {
         return {};
