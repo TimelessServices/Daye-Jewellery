@@ -139,6 +139,7 @@ export function flattenCartEntries(cart) {
             quantity,
             unitPrice,
             totalPrice: unitPrice * quantity,
+            type: deal?.typeLabel || deal?.Type || "DEAL",
             data: deal
         });
     }

@@ -26,6 +26,13 @@ function coerceItemArray(source) {
     if (!source) {
         return [];
     }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function mapDealItems(sources, fallbackPrefix) {
+    const result = {};
+    const sourceList = Array.isArray(sources) ? sources : [sources];
 
     if (Array.isArray(source)) {
         return source;

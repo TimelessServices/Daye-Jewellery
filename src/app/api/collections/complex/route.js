@@ -24,9 +24,6 @@ export async function GET(request) {
         });
     } catch (error) {
         console.error("Collections query failed:", error);
-        return Response.json({
-            success: false,
-            error: error.message
-        }, { status: 500 });
+        return Response.json({ success: false, error: error.message }, { status: 500 });
     }
 }
