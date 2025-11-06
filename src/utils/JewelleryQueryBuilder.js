@@ -116,8 +116,13 @@ class JewelryQueryBuilder {
                 return 'ORDER BY AmountSold DESC, DateAdded DESC';
             case 'popular_in_stock': 
                 return 'ORDER BY AmountSold DESC, InStock DESC';
-            case 'hidden_gems': 
+            case 'hidden_gems':
                 return 'ORDER BY AmountSold ASC, Price ASC';
+
+            case 'popularity':
+                return 'ORDER BY AmountSold DESC, InStock DESC, DateAdded DESC';
+            case 'rating':
+                return 'ORDER BY AmountSold DESC, DateAdded DESC';
             
             // Date sorting
             case 'newest_first': 
