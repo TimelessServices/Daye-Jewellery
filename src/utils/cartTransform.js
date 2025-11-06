@@ -1,12 +1,37 @@
-const resolveNumber = (...values) => {
-    for (const value of values) {
-        if (value === null || value === undefined) continue;
-        const parsed = typeof value === 'number' ? value : Number(value);
-        if (Number.isFinite(parsed)) {
-            return parsed;
+const pickFirst = (source, keys, fallback) => {
+    for (const key of keys) {
+        const value = source?.[key];
+        if (value !== undefined && value !== null && value !== "") {
+            return value;
         }
     }
-    return 0;
+    return fallback;
+};
+
+const toNumber = (value, fallback = 0) => {
+    if (value === null || value === undefined || value === "") {
+        return fallback;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toQuantity = (value, fallback = 1) => {
+    const parsed = toNumber(value, NaN);
+    if (Number.isFinite(parsed) && parsed > 0) {
+        return parsed;
+    }
+    return fallback;
+};
+
+const bucketToArray = (bucket) => {
+    if (Array.isArray(bucket)) {
+        return bucket;
+    }
+    if (bucket && typeof bucket === "object") {
+        return Object.values(bucket);
+    }
+    return [];
 };
 
 export function flattenCartEntries(cart) {
@@ -18,10 +43,13 @@ export function flattenCartEntries(cart) {
 
     const singles = Object.entries(cart.single || {});
     for (const [key, item] of singles) {
-        const quantity = typeof item?.quantity === "number" ? item.quantity : 1;
-        const unitPrice = typeof item?.price === "number" ? item.price : Number(item?.price) || 0;
-        const desc = item?.desc || item?.name || `Item ${key}`;
-        const size = item?.size || item?.selectedSize || "—";
+        const quantity = toQuantity(item?.quantity, 1);
+        const unitPrice = toNumber(
+            pickFirst(item, ["Price", "price", "EffectivePrice", "effectivePrice"], item?.price),
+            0,
+        );
+        const desc = pickFirst(item, ["Desc", "desc", "Name", "name"], `Item ${key}`);
+        const size = pickFirst(item, ["Size", "size", "selectedSize"], "—");
         entries.push({
             bucket: "single",
             key: `single-${key}`,
@@ -37,16 +65,22 @@ export function flattenCartEntries(cart) {
 
     const sets = Object.entries(cart.set || {});
     for (const [key, set] of sets) {
-        const quantity = typeof set?.quantity === "number" ? set.quantity : 1;
-        const unitPriceSource = typeof set?.totalPrice === "number"
-            ? set.totalPrice
-            : set?.TotalPrice ?? set?.Price ?? set?.SetPrice;
-        const unitPrice = typeof unitPriceSource === "number"
-            ? unitPriceSource
-            : Number(unitPriceSource) || 0;
-        const itemCount = Array.isArray(set?.itemsList) ? set.itemsList.length : (set?.itemTotal || 0);
-        const desc = set?.collectionName || set?.CollectionName || set?.Name || set?.name || `Set ${key}`;
-        const size = itemCount > 0 ? `${itemCount} pcs` : (set?.size || "Set");
+        const quantity = toQuantity(set?.quantity, 1);
+        const unitPrice = toNumber(
+            pickFirst(set, ["SetPrice", "TotalPrice", "totalPrice", "Price", "price"], 0),
+            0,
+        );
+        const itemsList = bucketToArray(pickFirst(set, ["itemsList", "ItemsList", "items"], []));
+        const itemCount = toNumber(
+            pickFirst(set, ["ItemCount", "itemCount", "ItemTotal", "itemTotal"], itemsList.length),
+            itemsList.length,
+        );
+        const desc = pickFirst(
+            set,
+            ["Name", "collectionName", "CollectionName", "name"],
+            `Set ${key}`,
+        );
+        const size = itemCount > 0 ? `${itemCount} pcs` : pickFirst(set, ["size"], "Set");
         const subtitle = itemCount > 0 ? `Set of ${itemCount} pieces` : undefined;
         entries.push({
             bucket: "set",
@@ -58,34 +92,40 @@ export function flattenCartEntries(cart) {
             quantity,
             unitPrice,
             totalPrice: unitPrice * quantity,
-            type: set?.typeLabel || set?.Type || "SET",
-            data: set
+            data: { ...set, ItemsList: itemsList, itemsList }
         });
     }
 
     const deals = Object.entries(cart.deal || {});
     for (const [key, deal] of deals) {
-        const quantity = typeof deal?.quantity === "number" ? deal.quantity : 1;
-        const unitPriceSource = typeof deal?.totalPrice === "number"
-            ? deal.totalPrice
-            : deal?.TotalPrice ?? deal?.DealPrice ?? deal?.Price ?? deal?.price;
-        const unitPrice = typeof unitPriceSource === "number"
-            ? unitPriceSource
-            : Number(unitPriceSource) || 0;
-        const desc = deal?.collectionName
-            || deal?.CollectionName
-            || deal?.Name
-            || deal?.name
-            || `Deal ${key}`;
-        const buyQty = deal?.buyQty ?? deal?.BuyQty ?? deal?.buyQuantity;
-        const getQty = deal?.getQty ?? deal?.GetQty ?? deal?.getQuantity;
-        const discount = deal?.dealDiscount ?? deal?.DealDiscount ?? deal?.Discount;
+        const quantity = toQuantity(deal?.quantity, 1);
+        const unitPrice = toNumber(
+            pickFirst(deal, ["TotalPrice", "totalPrice", "DealPrice", "Price", "price"], 0),
+            0,
+        );
+        const desc = pickFirst(
+            deal,
+            ["Name", "collectionName", "CollectionName", "name"],
+            `Deal ${key}`,
+        );
+        const buyQty = toNumber(
+            pickFirst(deal, ["BuyQuantity", "BuyQty", "buyQty", "buyQuantity"], null),
+            null,
+        );
+        const getQty = toNumber(
+            pickFirst(deal, ["GetQuantity", "GetQty", "getQty", "getQuantity"], null),
+            null,
+        );
+        const discount = toNumber(
+            pickFirst(deal, ["DealDiscount", "Discount", "dealDiscount"], null),
+            null,
+        );
         let subtitle;
-        if (typeof buyQty === "number" || typeof getQty === "number") {
-            const buyText = typeof buyQty === "number" ? buyQty : "?";
-            const getText = typeof getQty === "number" ? getQty : "?";
+        if (buyQty !== null || getQty !== null) {
+            const buyText = buyQty !== null ? buyQty : "?";
+            const getText = getQty !== null ? getQty : "?";
             subtitle = `Deal: Buy ${buyText}, Get ${getText}`;
-            if (typeof discount === "number" && discount > 0) {
+            if (discount !== null && discount > 0) {
                 subtitle += ` @ ${discount}% off`;
             }
         }
@@ -129,25 +169,41 @@ export function deriveOrderItemsFromEntries(entries) {
         }
 
         if (bucket === "set") {
-            const itemsList = Array.isArray(data?.itemsList) ? data.itemsList : [];
+            const itemsList = bucketToArray(pickFirst(data, ["ItemsList", "itemsList", "items"], []));
             if (itemsList.length > 0) {
                 const divisor = itemsList.length || 1;
                 for (let idx = 0; idx < itemsList.length; idx += 1) {
                     const item = itemsList[idx];
-                    const itemQuantity = typeof item?.quantity === "number" ? item.quantity : 1;
+                    const itemQuantity = toQuantity(item?.quantity, 1);
                     orderItems.push({
-                        jewelleryId: item?.jewelleryID || item?.jewelleryId || item?.itemId || `${id}-${idx}`,
-                        size: item?.size || "SET",
+                        jewelleryId: pickFirst(item, ["JewelleryID", "jewelleryID", "jewelleryId", "itemId"], `${id}-${idx}`),
+                        size: pickFirst(item, ["Size", "size"], "SET"),
                         quantity: quantity * itemQuantity,
-                        effectivePrice: typeof item?.price === "number"
-                            ? item.price
-                            : (typeof item?.effectivePrice === "number" ? item.effectivePrice : unitPrice / divisor)
+                        effectivePrice: (() => {
+                            const explicit = pickFirst(item, ["price", "Price"], null);
+                            const effective = pickFirst(item, ["EffectivePrice", "effectivePrice"], null);
+                            if (typeof explicit === "number") {
+                                return explicit;
+                            }
+                            if (typeof effective === "number") {
+                                return effective;
+                            }
+                            const numericExplicit = toNumber(explicit, NaN);
+                            if (Number.isFinite(numericExplicit)) {
+                                return numericExplicit;
+                            }
+                            const numericEffective = toNumber(effective, NaN);
+                            if (Number.isFinite(numericEffective)) {
+                                return numericEffective;
+                            }
+                            return unitPrice / divisor;
+                        })()
                     });
                 }
             } else {
                 orderItems.push({
-                    jewelleryId: data?.collectionId || data?.collectionID || data?.CollectionID || id,
-                    size: data?.size || "SET",
+                    jewelleryId: pickFirst(data, ["CollectionID", "collectionID", "collectionId"], id),
+                    size: pickFirst(data, ["size"], "SET"),
                     quantity,
                     effectivePrice: unitPrice
                 });
@@ -156,37 +212,37 @@ export function deriveOrderItemsFromEntries(entries) {
         }
 
         if (bucket === "deal") {
-            const buyItems = (() => {
-                if (Array.isArray(data?.buyItems)) { return data.buyItems; }
-                if (Array.isArray(data?.BuyItems)) { return data.BuyItems; }
-                if (data?.buyItems && typeof data.buyItems === 'object') { return Object.values(data.buyItems); }
-                if (data?.BuyItems && typeof data.BuyItems === 'object') { return Object.values(data.BuyItems); }
-                return [];
-            })();
-            const getItems = (() => {
-                if (Array.isArray(data?.getItems)) { return data.getItems; }
-                if (Array.isArray(data?.GetItems)) { return data.GetItems; }
-                if (data?.getItems && typeof data.getItems === 'object') { return Object.values(data.getItems); }
-                if (data?.GetItems && typeof data.GetItems === 'object') { return Object.values(data.GetItems); }
-                return [];
-            })();
+            const buyItems = bucketToArray(pickFirst(data, ["BuyItems", "buyItems"], []));
+            const getItems = bucketToArray(pickFirst(data, ["GetItems", "getItems"], []));
             const dealItems = [...buyItems, ...getItems];
             if (dealItems.length > 0) {
                 for (let idx = 0; idx < dealItems.length; idx += 1) {
                     const item = dealItems[idx];
-                    const itemQuantity = typeof item?.quantity === "number" ? item.quantity : 1;
+                    const itemQuantity = toQuantity(item?.quantity, 1);
                     orderItems.push({
-                        jewelleryId: item?.jewelleryID || item?.jewelleryId || item?.itemId || `${id}-${idx}`,
-                        size: item?.size || "DEAL",
+                        jewelleryId: pickFirst(item, ["JewelleryID", "jewelleryID", "jewelleryId", "itemId"], `${id}-${idx}`),
+                        size: pickFirst(item, ["Size", "size"], "DEAL"),
                         quantity: quantity * itemQuantity,
-                        effectivePrice: typeof item?.price === "number"
-                            ? item.price
-                            : (typeof item?.discountPrice === "number" ? item.discountPrice : unitPrice)
+                        effectivePrice: (() => {
+                            const explicit = pickFirst(item, ["price", "Price"], null);
+                            const discountPrice = pickFirst(item, ["DiscountPrice", "discountPrice"], null);
+                            const effective = pickFirst(item, ["EffectivePrice", "effectivePrice"], null);
+                            if (typeof explicit === "number") { return explicit; }
+                            if (typeof discountPrice === "number") { return discountPrice; }
+                            if (typeof effective === "number") { return effective; }
+                            const numericExplicit = toNumber(explicit, NaN);
+                            if (Number.isFinite(numericExplicit)) { return numericExplicit; }
+                            const numericDiscount = toNumber(discountPrice, NaN);
+                            if (Number.isFinite(numericDiscount)) { return numericDiscount; }
+                            const numericEffective = toNumber(effective, NaN);
+                            if (Number.isFinite(numericEffective)) { return numericEffective; }
+                            return unitPrice;
+                        })()
                     });
                 }
             } else {
                 orderItems.push({
-                    jewelleryId: data?.collectionId || data?.collectionID || data?.CollectionID || id,
+                    jewelleryId: pickFirst(data, ["CollectionID", "collectionID", "collectionId"], id),
                     size: "DEAL",
                     quantity,
                     effectivePrice: unitPrice

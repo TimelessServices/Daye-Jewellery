@@ -15,6 +15,17 @@ function toNumber(value, fallback = 0) {
     if (typeof value === 'number' && Number.isFinite(value)) {
         return value;
     }
+    if (value === null || value === undefined || value === '') {
+        return fallback;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function coerceItemArray(source) {
+    if (!source) {
+        return [];
+    }
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
 }
@@ -23,32 +34,46 @@ function mapDealItems(sources, fallbackPrefix) {
     const result = {};
     const sourceList = Array.isArray(sources) ? sources : [sources];
 
+    if (Array.isArray(source)) {
+        return source;
+    }
+
+    if (typeof source === 'object') {
+        return Object.values(source);
+    }
+
+    return [];
+}
+
+function mapDealItems(sources, fallbackPrefix) {
+    const result = new Map();
+    let offset = 0;
+
+    const sourceList = Array.isArray(sources) ? sources : [sources];
+
     sourceList.forEach((source) => {
-        if (!source) {
-            return;
-        }
+        const items = coerceItemArray(source);
+        items.forEach((value) => {
+            if (!value) {
+                return;
+            }
 
-        if (typeof source === 'object' && !Array.isArray(source)) {
-            Object.entries(source).forEach(([key, value]) => {
-                const itemKey = value?.itemKey ?? key;
-                result[itemKey] = { ...value, itemKey };
-            });
-            return;
-        }
+            const itemKey = value?.itemKey
+                ?? value?.itemId
+                ?? value?.jewelleryID
+                ?? value?.jewelleryId
+                ?? value?.JewelleryID
+                ?? `${fallbackPrefix}-${offset}`;
 
-        if (Array.isArray(source)) {
-            const offset = Object.keys(result).length;
-            source.forEach((value, index) => {
-                const itemKey = value?.itemKey
-                    ?? (value?.itemId
-                        ? `${value.itemId}_${value?.size ?? index}`
-                        : `${fallbackPrefix}-${offset + index}`);
-                result[itemKey] = { ...value, itemKey };
-            });
-        }
+            offset += 1;
+
+            if (!result.has(itemKey)) {
+                result.set(itemKey, { ...value, itemKey });
+            }
+        });
     });
 
-    return result;
+    return Array.from(result.values());
 }
 
 export function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
@@ -66,8 +91,8 @@ export function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
     const name = fetchedDeal?.Name
         ?? fetchedDeal?.collectionName
         ?? fetchedDeal?.name
-        ?? existingDeal.collectionName
         ?? existingDeal.Name
+        ?? existingDeal.collectionName
         ?? existingDeal.name
         ?? `Deal ${collectionId}`;
 
@@ -75,8 +100,9 @@ export function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
         fetchedDeal?.BuyQuantity
         ?? fetchedDeal?.BuyQty
         ?? fetchedDeal?.buyQty
-        ?? existingDeal.buyQty
+        ?? existingDeal.BuyQuantity
         ?? existingDeal.BuyQty
+        ?? existingDeal.buyQty
         ?? existingDeal.buyQuantity
     );
 
@@ -84,8 +110,9 @@ export function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
         fetchedDeal?.GetQuantity
         ?? fetchedDeal?.GetQty
         ?? fetchedDeal?.getQty
-        ?? existingDeal.getQty
+        ?? existingDeal.GetQuantity
         ?? existingDeal.GetQty
+        ?? existingDeal.getQty
         ?? existingDeal.getQuantity
     );
 
@@ -93,28 +120,34 @@ export function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
         fetchedDeal?.DealDiscount
         ?? fetchedDeal?.Discount
         ?? fetchedDeal?.dealDiscount
-        ?? existingDeal.discount
+        ?? existingDeal.DealDiscount
         ?? existingDeal.Discount
         ?? existingDeal.dealDiscount
+        ?? existingDeal.discount
     );
 
     const totalPrice = toNumber(
         fetchedDeal?.TotalPrice
         ?? fetchedDeal?.DealPrice
         ?? fetchedDeal?.price
-        ?? existingDeal.totalPrice
+        ?? fetchedDeal?.Price
         ?? existingDeal.TotalPrice
+        ?? existingDeal.totalPrice
         ?? existingDeal.price
+        ?? existingDeal.Price
     );
 
     const originalPrice = toNumber(
         fetchedDeal?.OriginalPrice
         ?? fetchedDeal?.originalPrice
+        ?? existingDeal.OriginalPrice
         ?? existingDeal.originalPrice,
-        0
+        totalPrice
     );
 
-    const quantity = typeof existingDeal.quantity === 'number' ? existingDeal.quantity : 1;
+    const quantity = Number.isFinite(existingDeal.quantity) && existingDeal.quantity > 0
+        ? existingDeal.quantity
+        : 1;
 
     const buyItems = mapDealItems([
         fetchedDeal?.BuyItems,
@@ -129,46 +162,49 @@ export function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
         existingDeal.GetItems,
     ], `${collectionId}-get`);
 
-    const itemCount = fetchedDeal?.ItemCount
+    const itemCount = toNumber(
+        fetchedDeal?.ItemCount
         ?? fetchedDeal?.itemCount
-        ?? existingDeal.itemCount
-        ?? Object.keys(buyItems).length;
+        ?? existingDeal.ItemCount
+        ?? existingDeal.itemCount,
+        buyItems.length + getItems.length,
+    );
 
-    const base = {
+    const normalized = {
         ...existingDeal,
+        CollectionID: collectionId,
         collectionId,
+        collectionID: collectionId,
+        Name: name,
         collectionName: name,
         name,
+        BuyQuantity: buyQty,
+        BuyQty: buyQty,
         buyQty,
+        buyQuantity: buyQty,
+        GetQuantity: getQty,
+        GetQty: getQty,
         getQty,
-        discount,
-        quantity,
+        getQuantity: getQty,
+        DealDiscount: discount,
+        Discount: discount,
+        dealDiscount: discount,
+        TotalPrice: totalPrice,
         totalPrice,
+        price: totalPrice,
+        Price: totalPrice,
+        OriginalPrice: originalPrice,
         originalPrice,
+        ItemCount: itemCount,
         itemCount,
+        BuyItems: buyItems,
         buyItems,
+        GetItems: getItems,
         getItems,
+        quantity,
     };
 
-    const aliasGroups = [
-        ['collectionId', 'collectionID', 'CollectionID'],
-        ['collectionName', 'Name', 'name'],
-        ['buyQty', 'BuyQty', 'buyQuantity'],
-        ['getQty', 'GetQty', 'getQuantity'],
-        ['discount', 'Discount', 'dealDiscount'],
-        ['totalPrice', 'TotalPrice', 'price'],
-        ['itemCount', 'ItemCount'],
-        ['buyItems', 'BuyItems'],
-        ['getItems', 'GetItems'],
-    ];
-
-    aliasGroups.forEach(([primary, ...aliases]) => {
-        aliases.forEach((alias) => {
-            base[alias] = base[primary];
-        });
-    });
-
-    return base;
+    return normalized;
 }
 
 export async function loadDeals({ forceRefresh = false } = {}) {
@@ -240,21 +276,22 @@ export function syncCartDeals(
             const fetchedDeal = fetchedDealMap.get(dealId);
             const normalized = normalizeDealShape(currentDeal, fetchedDeal);
 
-            const hasValidBuyItems = currentDeal?.buyItems
-                && typeof currentDeal.buyItems === 'object'
-                && !Array.isArray(currentDeal.buyItems);
+            const existingBuyBucket = currentDeal?.BuyItems ?? currentDeal?.buyItems;
+            const hasValidBuyItems = Array.isArray(existingBuyBucket)
+                || (existingBuyBucket && typeof existingBuyBucket === 'object');
 
             const needsUpdate =
-                currentDeal?.collectionName !== normalized.collectionName
+                currentDeal?.Name !== normalized.Name
+                || !Array.isArray(normalized.BuyItems)
                 || !hasValidBuyItems
-                || typeof currentDeal?.totalPrice !== 'number'
-                || currentDeal.totalPrice !== normalized.totalPrice;
+                || !Number.isFinite(currentDeal?.TotalPrice ?? currentDeal?.totalPrice)
+                || toNumber(currentDeal?.TotalPrice ?? currentDeal?.totalPrice) !== normalized.TotalPrice;
 
             if (needsUpdate) {
                 const quantity = normalized.quantity || 1;
                 removeFromCart('deal', dealId);
                 addToCart('deal', dealId, { ...normalized, quantity });
-                console.log(`Normalized deal in cart: ${normalized.collectionName}`);
+                console.log(`Normalized deal in cart: ${normalized.Name}`);
             }
         }
     }
