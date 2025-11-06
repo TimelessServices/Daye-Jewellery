@@ -128,8 +128,7 @@ export async function loadDeals() {
     }
 
     try {
-        const params = new URLSearchParams({ limit: '15' });
-        const response = await cachedFetch(`/api/collections/deals?${params.toString()}`);
+        const response = await cachedFetch(`/api/collections/deals`);
 
         if (response.success) {
             console.log("Deals fetched successfully");

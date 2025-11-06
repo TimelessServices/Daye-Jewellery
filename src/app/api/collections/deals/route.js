@@ -1,14 +1,5 @@
 import { queryDB } from "@/utils/Database";
 
-function parseLimit(searchParams, defaultLimit = 15, maxLimit = 15) {
-    const limitParam = searchParams.get('limit');
-    const parsed = limitParam ? parseInt(limitParam, 10) : defaultLimit;
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-        return defaultLimit;
-    }
-    return Math.min(parsed, maxLimit);
-}
-
 function coerceNumber(...values) {
     for (const value of values) {
         if (value === undefined || value === null) continue;
@@ -20,12 +11,9 @@ function coerceNumber(...values) {
     return null;
 }
 
-export async function GET(request) {
+export async function GET() {
     try {
-        const { searchParams } = new URL(request.url);
-        const limit = parseLimit(searchParams);
-
-        const deals = await queryDB(`SELECT * FROM vw_ActiveDeals LIMIT ${limit}`);
+        const deals = await queryDB(`SELECT * FROM vw_ActiveDeals LIMIT 15`);
 
         const collectionIds = Array.from(new Set(
             deals
