@@ -47,6 +47,16 @@
       "category": "popularity"
     },
     {
+      "value": "rating",
+      "label": "Top Rated",
+      "category": "popularity"
+    },
+    {
+      "value": "popularity",
+      "label": "Most Popular",
+      "category": "popularity"
+    },
+    {
       "value": "newest_first",
       "label": "Just Arrived",
       "category": "date"

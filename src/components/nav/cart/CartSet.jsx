@@ -13,7 +13,7 @@ export const CartSet = memo(function CartSet({ set, onRemove }) {
     })();
 
     const unitPrice = (() => {
-        const raw = set?.totalPrice ?? set?.Price ?? set?.price ?? 0;
+        const raw = set?.totalPrice ?? set?.SetPrice ?? set?.Price ?? set?.price ?? 0;
         const parsed = Number(raw);
         if (!Number.isFinite(parsed)) {
             return 0;

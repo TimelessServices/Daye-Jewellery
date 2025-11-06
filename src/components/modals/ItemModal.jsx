@@ -8,19 +8,61 @@ import { DealSelector } from './components/DealSelector';
 import { useToasts, useLoading } from '@/contexts/UIProvider';
 import { useCart, useWishlist } from '@/contexts/AppProvider';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { calculateDealTotal, getDealDirectory } from '@/utils/dealConfigService';
 
 function getDealIdentifier(deal) {
     if (!deal) return '';
     return String(deal.ID ?? deal.DealID ?? deal.CollectionID ?? '');
 }
 
-function normalizeDealMeta(deal) {
+function normalizeDealMeta(deal, cartDeals = {}, dealDirectory = new Map()) {
     if (!deal) return null;
     const id = getDealIdentifier(deal);
-    const name = deal.Name ?? deal.collectionName ?? `Deal ${id}`;
-    const buyQty = Number(deal.BuyQty ?? deal.BuyQuantity ?? deal.buyQty ?? 0) || 0;
-    const getQty = Number(deal.GetQty ?? deal.GetQuantity ?? deal.getQty ?? 0) || 0;
-    const discount = Number(deal.Discount ?? deal.DealDiscount ?? deal.discount ?? 0) || 0;
+    if (!id) { return null; }
+
+    const cartEntry = cartDeals?.[id];
+    const directoryEntry = typeof dealDirectory.get === 'function' ? dealDirectory.get(id) : undefined;
+
+    const name = deal.Name
+        ?? deal.collectionName
+        ?? cartEntry?.collectionName
+        ?? cartEntry?.Name
+        ?? directoryEntry?.Name
+        ?? directoryEntry?.collectionName
+        ?? `Deal ${id}`;
+
+    const buyQty = Number(
+        deal.BuyQty
+        ?? deal.BuyQuantity
+        ?? deal.buyQty
+        ?? cartEntry?.buyQty
+        ?? cartEntry?.BuyQty
+        ?? directoryEntry?.BuyQuantity
+        ?? directoryEntry?.BuyQty
+        ?? 0
+    ) || 0;
+
+    const getQty = Number(
+        deal.GetQty
+        ?? deal.GetQuantity
+        ?? deal.getQty
+        ?? cartEntry?.getQty
+        ?? cartEntry?.GetQty
+        ?? directoryEntry?.GetQuantity
+        ?? directoryEntry?.GetQty
+        ?? 0
+    ) || 0;
+
+    const discount = Number(
+        deal.Discount
+        ?? deal.DealDiscount
+        ?? deal.discount
+        ?? cartEntry?.Discount
+        ?? cartEntry?.dealDiscount
+        ?? directoryEntry?.DealDiscount
+        ?? 0
+    ) || 0;
+
     return { id, name, buyQty, getQty, discount };
 }
 
@@ -72,7 +114,15 @@ export function ItemModal({ isOpen, item, closeModal, onSuccess }) {
     const hasSizes = item && Array.isArray(item.availableSizes) && item.availableSizes.length > 0;
     const defaultSize = hasSizes ? item.availableSizes[0] : 'One Size';
 
-    const deals = useMemo(() => (item?.getDeals ? item.getDeals.map(normalizeDealMeta).filter(Boolean) : []), [item]);
+    const cartDeals = useMemo(() => cart?.deal ?? {}, [cart]);
+    const dealDirectory = useMemo(() => getDealDirectory(), [cartDeals]);
+
+    const deals = useMemo(() => {
+        if (!item?.getDeals) { return []; }
+        return item.getDeals
+            .map((deal) => normalizeDealMeta(deal, cartDeals, dealDirectory))
+            .filter(Boolean);
+    }, [item, cartDeals, dealDirectory]);
 
     const isOnSale = item ? item.isOnSale && item.getSalePrice !== null : false;
     const currentPrice = isOnSale ? item.getSalePrice : item?.getBasePrice ?? 0;
@@ -170,33 +220,48 @@ export function ItemModal({ isOpen, item, closeModal, onSuccess }) {
                 const nextBuyMap = dealRole === 'buy' ? targetMap : currentBuyMap;
                 const nextGetMap = dealRole === 'get' ? targetMap : currentGetMap;
 
-                const baseDeal = existingDeal ?? {
+                const resolvedName = dealMeta?.name ?? existingDeal?.collectionName ?? `Deal ${targetDealId}`;
+                const resolvedBuyQty = dealMeta?.buyQty ?? existingDeal?.buyQty ?? existingDeal?.BuyQty ?? 0;
+                const resolvedGetQty = dealMeta?.getQty ?? existingDeal?.getQty ?? existingDeal?.GetQty ?? 0;
+                const resolvedDiscount = dealMeta?.discount
+                    ?? existingDeal?.discount
+                    ?? existingDeal?.Discount
+                    ?? existingDeal?.dealDiscount
+                    ?? 0;
+
+                const totalPrice = calculateDealTotal({
+                    buyItems: nextBuyMap,
+                    getItems: nextGetMap,
+                    discount: resolvedDiscount
+                });
+                const normalizedTotalPrice = Number.isFinite(totalPrice) ? totalPrice : 0;
+                const quantityDelta = existingDeal ? 0 : 1;
+
+                addToCart('deal', targetDealId, {
+                    ...existingDeal,
                     collectionId: targetDealId,
                     collectionID: targetDealId,
                     CollectionID: targetDealId,
-                    collectionName: dealMeta?.name ?? `Deal ${targetDealId}`,
-                    Name: dealMeta?.name ?? `Deal ${targetDealId}`,
-                    buyQty: dealMeta?.buyQty ?? 0,
-                    BuyQty: dealMeta?.buyQty ?? 0,
-                    buyQuantity: dealMeta?.buyQty ?? 0,
-                    getQty: dealMeta?.getQty ?? 0,
-                    GetQty: dealMeta?.getQty ?? 0,
-                    getQuantity: dealMeta?.getQty ?? 0,
-                    discount: dealMeta?.discount ?? 0,
-                    Discount: dealMeta?.discount ?? 0,
-                    dealDiscount: dealMeta?.discount ?? 0,
-                    totalPrice: existingDeal?.totalPrice ?? 0,
-                    price: existingDeal?.totalPrice ?? 0,
-                    quantity: 1
-                };
-
-                addToCart('deal', targetDealId, {
-                    ...baseDeal,
+                    collectionName: resolvedName,
+                    Name: resolvedName,
+                    name: resolvedName,
+                    buyQty: resolvedBuyQty,
+                    BuyQty: resolvedBuyQty,
+                    buyQuantity: resolvedBuyQty,
+                    getQty: resolvedGetQty,
+                    GetQty: resolvedGetQty,
+                    getQuantity: resolvedGetQty,
+                    discount: resolvedDiscount,
+                    Discount: resolvedDiscount,
+                    dealDiscount: resolvedDiscount,
                     buyItems: nextBuyMap,
                     BuyItems: nextBuyMap,
                     getItems: nextGetMap,
                     GetItems: nextGetMap,
-                    quantity: existingDeal ? 0 : baseDeal.quantity ?? 1
+                    totalPrice: normalizedTotalPrice,
+                    TotalPrice: normalizedTotalPrice,
+                    price: normalizedTotalPrice,
+                    quantity: quantityDelta
                 });
             }
 

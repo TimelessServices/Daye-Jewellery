@@ -67,8 +67,14 @@ export function SetModal({ isOpen, collection, items, closeModal }) {
         ?? ''
     );
     const collectionName = collection?.Name ?? collection?.collectionName ?? collection?.name ?? 'Jewellery Set';
-    const collectionPriceRaw = collection?.TotalPrice ?? collection?.CollectionPrice ?? collection?.Price ?? 0;
-    const collectionPrice = Number(collectionPriceRaw) || 0;
+    const collectionPriceRaw =
+        collection?.SetPrice
+        ?? collection?.TotalPrice
+        ?? collection?.CollectionPrice
+        ?? collection?.Price
+        ?? 0;
+    const collectionPriceParsed = Number(collectionPriceRaw);
+    const collectionPrice = Number.isFinite(collectionPriceParsed) ? collectionPriceParsed : 0;
 
     const itemsByType = useMemo(() => {
         return (Array.isArray(items) ? items : []).reduce((acc, item) => {
@@ -207,6 +213,9 @@ export function SetModal({ isOpen, collection, items, closeModal }) {
                 collectionId,
                 collectionName,
                 totalPrice: collectionPrice,
+                TotalPrice: collectionPrice,
+                price: collectionPrice,
+                SetPrice: collectionPrice,
                 itemTotal: itemsList.length,
                 itemsList,
                 ItemsList: itemsList,

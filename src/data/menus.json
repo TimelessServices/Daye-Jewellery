@@ -77,11 +77,11 @@
           "id": "most-gifted",
           "title": "Most Gifted",
           "description": "Perfect for giving to someone special",
-          "link": "/shop", 
+          "link": "/shop",
           "action": {
             "type": "filter",
             "method": "navigateWithFilters",
-            "params": { "tags": ["gift"], "sort": "popularity" }
+            "params": { "sort": "popularity" }
           }
         }
       ]

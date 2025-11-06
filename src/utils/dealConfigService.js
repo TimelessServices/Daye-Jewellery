@@ -3,6 +3,37 @@ import { createStorageManager } from '@/utils/Storage';
 
 const storage = createStorageManager("deal_data", "sessionStorage");
 
+let inMemoryDeals = null;
+
+function readFromStorage() {
+    try {
+        const stored = storage.get();
+        if (!stored?.success || !stored.data) { return null; }
+        if (Array.isArray(stored.data)) { return stored.data; }
+        if (Array.isArray(stored.data.deals)) { return stored.data.deals; }
+        return null;
+    } catch (error) {
+        console.warn('Unable to read deal data from storage:', error);
+        return null;
+    }
+}
+
+function buildDealDirectory(list = []) {
+    const directory = new Map();
+    (Array.isArray(list) ? list : []).forEach((deal) => {
+        const id = String(
+            deal?.CollectionID
+            ?? deal?.collectionId
+            ?? deal?.DealID
+            ?? deal?.ID
+            ?? ''
+        );
+        if (!id) { return; }
+        directory.set(id, deal);
+    });
+    return directory;
+}
+
 function mapDealItems(source, fallbackPrefix) {
     const map = {};
     if (source && typeof source === 'object' && !Array.isArray(source)) {
@@ -20,6 +51,36 @@ function mapDealItems(source, fallbackPrefix) {
     });
 
     return map;
+}
+
+function normalizeDealEntries(bucket) {
+    if (!bucket) { return []; }
+    if (Array.isArray(bucket)) { return bucket; }
+    if (typeof bucket === 'object') { return Object.values(bucket); }
+    return [];
+}
+
+function sumDealBucket(bucket) {
+    return normalizeDealEntries(bucket).reduce((total, entry) => {
+        const price = Number(entry?.price ?? entry?.Price ?? entry?.discountPrice ?? 0);
+        const quantity = Number(entry?.quantity ?? entry?.Quantity ?? 1);
+        if (!Number.isFinite(price) || price < 0) { return total; }
+        const normalizedQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+        return total + price * normalizedQuantity;
+    }, 0);
+}
+
+export function calculateDealTotal({ buyItems, getItems, discount } = {}) {
+    const buySubtotal = sumDealBucket(buyItems);
+    const getSubtotal = sumDealBucket(getItems);
+    const parsedDiscount = Number(discount);
+    const normalizedDiscount = Number.isFinite(parsedDiscount)
+        ? Math.min(Math.max(parsedDiscount, 0), 100)
+        : 0;
+    const discountMultiplier = 1 - normalizedDiscount / 100;
+    const discountedGetSubtotal = getSubtotal * discountMultiplier;
+    const total = buySubtotal + discountedGetSubtotal;
+    return Math.round(total * 100) / 100;
 }
 
 function normalizeDealShape(existingDeal = {}, fetchedDeal) {
@@ -57,7 +118,6 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
 
     const quantity = typeof existingDeal?.quantity === 'number' ? existingDeal.quantity : 1;
     const totalPriceRaw = existingDeal?.totalPrice ?? existingDeal?.TotalPrice ?? existingDeal?.price ?? 0;
-    const totalPrice = typeof totalPriceRaw === 'number' ? totalPriceRaw : Number(totalPriceRaw) || 0;
 
     const buyItemsMap = mapDealItems(
         existingDeal?.buyItems
@@ -72,6 +132,17 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
         ?? fetchedDeal?.GetItems,
         `${collectionId || 'deal'}-get`
     );
+
+    const computedTotal = calculateDealTotal({
+        buyItems: buyItemsMap,
+        getItems: getItemsMap,
+        discount
+    });
+
+    const totalPriceCandidate = Number(totalPriceRaw);
+    const totalPrice = Number.isFinite(computedTotal)
+        ? computedTotal
+        : (Number.isFinite(totalPriceCandidate) ? totalPriceCandidate : 0);
 
     return {
         ...existingDeal,
@@ -101,30 +172,54 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
     };
 }
 
-export async function loadDeals() {
-    // Check sessionStorage first
-    const storageResponse = storage.get();
-    if (storageResponse?.success) {
-        console.log("Found deals in storage: ", storageResponse.data);
-        return storageResponse.data;
+export async function loadDeals(options = {}) {
+    const { forceRefresh = false } = options;
+
+    if (!forceRefresh && Array.isArray(inMemoryDeals)) {
+        return inMemoryDeals;
+    }
+
+    if (!forceRefresh) {
+        const storedDeals = readFromStorage();
+        if (storedDeals) {
+            inMemoryDeals = storedDeals;
+            return storedDeals;
+        }
     }
 
     try {
         const response = await cachedFetch('/api/collections/deals');
 
         if (response.success) {
-            console.log("Deals fetched successfully");
-            storage.set(response.results);
-            return response.results;
-        } else {
-            throw new Error("Failed to load deals");
+            const results = Array.isArray(response.results) ? response.results : [];
+            inMemoryDeals = results;
+            storage.set(results);
+            return results;
         }
+
+        throw new Error('Failed to load deals');
     } catch (error) {
         console.error('Error loading deals:', error);
         const fallback = readFromStorage();
-        if (fallback) { return fallback; }
+        if (fallback) {
+            inMemoryDeals = fallback;
+            return fallback;
+        }
         return { deals: [], updatedAt: null, source: 'error', error };
     }
+}
+
+export function getDealDirectory() {
+    if (Array.isArray(inMemoryDeals)) {
+        return buildDealDirectory(inMemoryDeals);
+    }
+
+    const storedDeals = readFromStorage();
+    if (storedDeals) {
+        return buildDealDirectory(storedDeals);
+    }
+
+    return new Map();
 }
 
 export function syncCartDeals(
@@ -194,6 +289,7 @@ export function syncCartDeals(
         }
     }
 
+    inMemoryDeals = Array.isArray(fetchedDeals) ? fetchedDeals : inMemoryDeals;
     // Update storage to match cart's final state
     storage.set(fetchedDeals);
     console.log("Deal sync complete");
