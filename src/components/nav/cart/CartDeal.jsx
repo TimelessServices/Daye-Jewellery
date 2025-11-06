@@ -3,62 +3,130 @@ import { Trash2, Gift } from "lucide-react";
 
 import { formatCurrency } from "@/utils/formatCurrency";
 
+const pickFirst = (source, keys, fallback) => {
+    for (const key of keys) {
+        const value = source?.[key];
+        if (value !== undefined && value !== null && value !== "") {
+            return value;
+        }
+    }
+    return fallback;
+};
+
+const toNumber = (value, fallback = 0) => {
+    if (value === null || value === undefined || value === "") {
+        return fallback;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toQuantity = (value, fallback = 1) => {
+    const parsed = toNumber(value, NaN);
+    if (Number.isFinite(parsed) && parsed > 0) {
+        return parsed;
+    }
+    return fallback;
+};
+
+const bucketToArray = (bucket) => {
+    if (Array.isArray(bucket)) {
+        return bucket;
+    }
+    if (bucket && typeof bucket === "object") {
+        return Object.values(bucket);
+    }
+    return [];
+};
+
 export const CartDeal = memo(function CartDeal({ deal, onRemove }) {
-    const quantity = (() => {
-        const parsed = Number(deal?.quantity);
-        if (!Number.isFinite(parsed) || parsed <= 0) {
-            return 1;
-        }
-        return parsed;
-    })();
+    const quantity = toQuantity(deal?.quantity, 1);
 
-    const unitPrice = (() => {
-        const raw = deal?.totalPrice ?? deal?.TotalPrice ?? deal?.price ?? 0;
-        const parsed = Number(raw);
-        if (!Number.isFinite(parsed)) {
-            return 0;
-        }
-        return parsed;
-    })();
+    const unitPrice = toNumber(
+        pickFirst(deal, [
+            "TotalPrice",
+            "totalPrice",
+            "DealPrice",
+            "Price",
+            "price",
+        ]),
+        0,
+    );
 
-    const buyItems = useMemo(() => {
-        if (Array.isArray(deal?.buyItems)) { return deal.buyItems; }
-        if (Array.isArray(deal?.BuyItems)) { return deal.BuyItems; }
-        if (deal?.buyItems && typeof deal.buyItems === "object") { return Object.values(deal.buyItems); }
-        if (deal?.BuyItems && typeof deal.BuyItems === "object") { return Object.values(deal.BuyItems); }
-        return [];
-    }, [deal]);
+    const buyItems = useMemo(
+        () => bucketToArray(pickFirst(deal, ["BuyItems", "buyItems"], [])),
+        [deal],
+    );
 
-    const getItems = useMemo(() => {
-        if (Array.isArray(deal?.getItems)) { return deal.getItems; }
-        if (Array.isArray(deal?.GetItems)) { return deal.GetItems; }
-        if (deal?.getItems && typeof deal.getItems === "object") { return Object.values(deal.getItems); }
-        if (deal?.GetItems && typeof deal.GetItems === "object") { return Object.values(deal.GetItems); }
-        return [];
-    }, [deal]);
+    const getItems = useMemo(
+        () => bucketToArray(pickFirst(deal, ["GetItems", "getItems"], [])),
+        [deal],
+    );
 
-    const buyQty = Number(deal?.buyQty ?? deal?.BuyQty ?? buyItems.length) || 0;
-    const getQty = Number(deal?.getQty ?? deal?.GetQty ?? getItems.length) || 0;
+    const buyQty = toNumber(
+        pickFirst(deal, ["BuyQuantity", "BuyQty", "buyQty", "buyQuantity"], buyItems.length),
+        buyItems.length,
+    );
+    const getQty = toNumber(
+        pickFirst(deal, ["GetQuantity", "GetQty", "getQty", "getQuantity"], getItems.length),
+        getItems.length,
+    );
 
-    const name = deal?.collectionName ?? deal?.Name ?? deal?.name ?? "Deal";
+    const dealId = pickFirst(deal, ["CollectionID", "collectionId", "collectionID"], "");
+    const name = pickFirst(
+        deal,
+        ["Name", "collectionName", "CollectionName", "name"],
+        dealId ? `Deal ${dealId}` : "Bundle Deal",
+    );
 
     const renderLine = (item, idx, accentClass = "") => {
-        const descriptor = item?.desc ?? item?.name ?? `Item ${idx + 1}`;
-        const type = item?.type ?? item?.Type ?? null;
-        const size = item?.size ?? item?.Size ?? null;
-        const quantityLabel = Number(item?.quantity) > 1 ? ` × ${Number(item.quantity)}` : "";
-        const price = item?.discountPrice ?? item?.price ?? null;
-        const hasPrice = price !== null && price !== undefined;
-        const parsedPrice = Number(price);
+        const descriptor = pickFirst(
+            item,
+            [
+                "Desc",
+                "Name",
+                "desc",
+                "name",
+                "CollectionName",
+                "collectionName",
+                "JewelleryName",
+                "jewelleryName",
+            ],
+            `Item ${idx + 1}`,
+        );
+        const type = pickFirst(item, ["Type", "type"], null);
+        const size = pickFirst(item, ["Size", "size"], null);
+        const quantityNumber = toQuantity(pickFirst(item, ["Quantity", "quantity"], 1), 1);
+        const quantityLabel = quantityNumber > 1 ? ` × ${quantityNumber}` : "";
+        const priceValue = toNumber(
+            pickFirst(
+                item,
+                [
+                    "EffectivePrice",
+                    "DiscountPrice",
+                    "Price",
+                    "price",
+                    "effectivePrice",
+                    "discountPrice",
+                ],
+                null,
+            ),
+            NaN,
+        );
+        const hasPrice = Number.isFinite(priceValue);
+        const itemKey = pickFirst(
+            item,
+            ["jewelleryID", "JewelleryID", "jewelleryId", "itemId", "itemKey"],
+            `${descriptor}-${idx}`,
+        );
+
         return (
-            <li key={item?.jewelleryID ?? item?.jewelleryId ?? idx} className={accentClass}>
+            <li key={itemKey} className={accentClass}>
                 <span className="font-medium text-dark/80">{descriptor}</span>
                 {type && <span className="text-dark/60"> {`(${type})`}</span>}
                 {size && <span className="text-dark/60"> {`• Size ${size}`}</span>}
                 {quantityLabel && <span className="text-dark/50">{quantityLabel}</span>}
-                {hasPrice && Number.isFinite(parsedPrice) && (
-                    <span className="text-dark/50"> {formatCurrency(parsedPrice)}</span>
-                )}
+                {hasPrice && <span className="text-dark/50"> {formatCurrency(priceValue)}</span>}
             </li>
         );
     };
