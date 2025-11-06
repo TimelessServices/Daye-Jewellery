@@ -138,11 +138,19 @@ export function FilterProvider({ children }) {
     }, [router]);
 
     // Simplified preset filters
-    const presetFilters = useMemo(() => ({
-        filterByType: (type) => navigateWithFilters({ types: [type] }, true),
-        filterOnSale: () => navigateWithFilters({ onSale: true }, true),
-        filterBestSellers: () => navigateWithFilters({ sort: "bestsellers" }, true),
-    }), [navigateWithFilters]);
+    const presetFilters = useMemo(() => {
+        const filterByType = (type) => navigateWithFilters({ types: [type] }, true);
+
+        return {
+            filterByType,
+            filterOnSale: () => navigateWithFilters({ onSale: true }, true),
+            filterBestSellers: () => navigateWithFilters({ sort: "bestsellers" }, true),
+            filterNecklaces: () => filterByType('Necklace'),
+            filterBracelets: () => filterByType('Bracelet'),
+            filterRings: () => filterByType('Ring'),
+            filterEarrings: () => filterByType('Earring')
+        };
+    }, [navigateWithFilters]);
 
     const value = useMemo(() => ({
         filters,
