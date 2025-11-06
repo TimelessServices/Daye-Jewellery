@@ -24,7 +24,7 @@ export default function CollectionScroller() {
             setLoading(loadingKey, true);
 
             try {
-                const data = await cachedFetch('/api/collections/complex');
+                const data = await cachedFetch('/api/collections/complex?limit=15');
                 if (data.success && activeRequestRef.current?.id === requestId) { setItems(data.results); }
             }
             catch (error) {

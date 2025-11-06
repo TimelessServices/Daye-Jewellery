@@ -3,6 +3,14 @@ import { createStorageManager } from '@/utils/Storage';
 
 const storage = createStorageManager("deal_data", "sessionStorage");
 
+function readFromStorage() {
+    const stored = storage.get();
+    if (stored?.success && stored.data) {
+        return stored.data;
+    }
+    return null;
+}
+
 function mapDealItems(source, fallbackPrefix) {
     const map = {};
     if (source && typeof source === 'object' && !Array.isArray(source)) {
@@ -30,22 +38,26 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
         ?? null;
 
     const name = fetchedDeal?.Name
+        ?? fetchedDeal?.CollectionName
         ?? existingDeal.collectionName
         ?? existingDeal.Name
         ?? existingDeal.name
         ?? `Deal ${collectionId ?? ''}`.trim();
 
     const buyQtyRaw = fetchedDeal?.BuyQuantity
+        ?? fetchedDeal?.BuyQty
         ?? existingDeal.buyQty
         ?? existingDeal.BuyQty
         ?? existingDeal.buyQuantity
         ?? 0;
     const getQtyRaw = fetchedDeal?.GetQuantity
+        ?? fetchedDeal?.GetQty
         ?? existingDeal.getQty
         ?? existingDeal.GetQty
         ?? existingDeal.getQuantity
         ?? 0;
     const discountRaw = fetchedDeal?.DealDiscount
+        ?? fetchedDeal?.Discount
         ?? existingDeal.discount
         ?? existingDeal.Discount
         ?? existingDeal.dealDiscount
@@ -56,7 +68,13 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
     const discount = Number(discountRaw) || 0;
 
     const quantity = typeof existingDeal?.quantity === 'number' ? existingDeal.quantity : 1;
-    const totalPriceRaw = existingDeal?.totalPrice ?? existingDeal?.TotalPrice ?? existingDeal?.price ?? 0;
+    const totalPriceRaw = existingDeal?.totalPrice
+        ?? existingDeal?.TotalPrice
+        ?? existingDeal?.price
+        ?? fetchedDeal?.TotalPrice
+        ?? fetchedDeal?.DealPrice
+        ?? fetchedDeal?.Price
+        ?? 0;
     const totalPrice = typeof totalPriceRaw === 'number' ? totalPriceRaw : Number(totalPriceRaw) || 0;
 
     const buyItemsMap = mapDealItems(
@@ -104,18 +122,22 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal) {
 export async function loadDeals() {
     // Check sessionStorage first
     const storageResponse = storage.get();
-    if (storageResponse?.success) {
+    if (storageResponse?.success && Array.isArray(storageResponse.data) && storageResponse.data.length > 0) {
         console.log("Found deals in storage: ", storageResponse.data);
         return storageResponse.data;
     }
 
     try {
-        const response = await cachedFetch('/api/collections/deals');
+        const params = new URLSearchParams({ limit: '15' });
+        const response = await cachedFetch(`/api/collections/deals?${params.toString()}`);
 
         if (response.success) {
             console.log("Deals fetched successfully");
-            storage.set(response.results);
-            return response.results;
+            const normalized = Array.isArray(response.results)
+                ? response.results.map((deal) => normalizeDealShape({}, deal))
+                : [];
+            storage.set(normalized);
+            return normalized;
         } else {
             throw new Error("Failed to load deals");
         }
@@ -123,7 +145,7 @@ export async function loadDeals() {
         console.error('Error loading deals:', error);
         const fallback = readFromStorage();
         if (fallback) { return fallback; }
-        return { deals: [], updatedAt: null, source: 'error', error };
+        return [];
     }
 }
 
@@ -136,9 +158,10 @@ export function syncCartDeals(
         return;
     }
 
+    const normalizedDeals = fetchedDeals.map((deal) => normalizeDealShape({}, deal));
     const currentDeals = cart?.deal ?? {};
     const fetchedDealMap = new Map(
-        fetchedDeals.map((deal) => [String(deal.CollectionID), deal])
+        normalizedDeals.map((deal) => [String(deal.CollectionID), deal])
     );
     const fetchedDealIds = new Set(fetchedDealMap.keys());
     const currentDealIds = new Set(Object.keys(currentDeals));
@@ -182,7 +205,7 @@ export function syncCartDeals(
     }
 
     // Add new deals (in fetched but not in cart)
-    for (const deal of fetchedDeals) {
+    for (const deal of normalizedDeals) {
         const dealId = String(deal.CollectionID);
         if (!currentDealIds.has(dealId)) {
             const dealTemplate = normalizeDealShape({ quantity: 1 }, deal);
@@ -195,6 +218,6 @@ export function syncCartDeals(
     }
 
     // Update storage to match cart's final state
-    storage.set(fetchedDeals);
+    storage.set(normalizedDeals);
     console.log("Deal sync complete");
 }

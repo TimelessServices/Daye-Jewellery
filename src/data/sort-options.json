@@ -27,6 +27,31 @@
       "category": "alphabetical"
     },
     {
+      "value": "sale_first",
+      "label": "Sale Items First",
+      "category": "sale"
+    },
+    {
+      "value": "biggest_discount",
+      "label": "Biggest Discount",
+      "category": "sale"
+    },
+    {
+      "value": "best_value",
+      "label": "Best Value (On Sale)",
+      "category": "sale"
+    },
+    {
+      "value": "sale_best_deals",
+      "label": "Top Sale Deals",
+      "category": "sale"
+    },
+    {
+      "value": "clearance",
+      "label": "Clearance Specials",
+      "category": "sale"
+    },
+    {
       "value": "bestsellers",
       "label": "Best Sellers",
       "category": "popularity"

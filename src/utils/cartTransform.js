@@ -1,3 +1,14 @@
+const resolveNumber = (...values) => {
+    for (const value of values) {
+        if (value === null || value === undefined) continue;
+        const parsed = typeof value === 'number' ? value : Number(value);
+        if (Number.isFinite(parsed)) {
+            return parsed;
+        }
+    }
+    return 0;
+};
+
 export function flattenCartEntries(cart) {
     if (!cart || typeof cart !== "object") {
         return [];
@@ -27,11 +38,15 @@ export function flattenCartEntries(cart) {
     const sets = Object.entries(cart.set || {});
     for (const [key, set] of sets) {
         const quantity = typeof set?.quantity === "number" ? set.quantity : 1;
-        const unitPrice = typeof set?.totalPrice === "number"
-            ? set.totalPrice
-            : (typeof set?.Price === "number" ? set.Price : Number(set?.totalPrice || set?.Price) || 0);
+        const unitPrice = resolveNumber(
+            set?.totalPrice,
+            set?.TotalPrice,
+            set?.CollectionPrice,
+            set?.Price,
+            set?.SetPrice
+        );
         const itemCount = Array.isArray(set?.itemsList) ? set.itemsList.length : (set?.itemTotal || 0);
-        const desc = set?.collectionName || set?.Name || set?.name || `Set ${key}`;
+        const desc = set?.collectionName || set?.CollectionName || set?.Name || set?.name || `Set ${key}`;
         const size = itemCount > 0 ? `${itemCount} pcs` : (set?.size || "Set");
         const subtitle = itemCount > 0 ? `Set of ${itemCount} pieces` : undefined;
         entries.push({
@@ -44,6 +59,7 @@ export function flattenCartEntries(cart) {
             quantity,
             unitPrice,
             totalPrice: unitPrice * quantity,
+            type: set?.typeLabel || set?.Type || "SET",
             data: set
         });
     }
@@ -51,17 +67,30 @@ export function flattenCartEntries(cart) {
     const deals = Object.entries(cart.deal || {});
     for (const [key, deal] of deals) {
         const quantity = typeof deal?.quantity === "number" ? deal.quantity : 1;
-        const unitPrice = typeof deal?.totalPrice === "number"
-            ? deal.totalPrice
-            : Number(deal?.TotalPrice || deal?.price || 0) || 0;
-        const desc = deal?.collectionName || deal?.Name || deal?.name || `Deal ${key}`;
+        const unitPrice = resolveNumber(
+            deal?.totalPrice,
+            deal?.TotalPrice,
+            deal?.Price,
+            deal?.price,
+            deal?.DealPrice,
+            deal?.dealPrice
+        );
+        const desc = deal?.collectionName
+            || deal?.CollectionName
+            || deal?.Name
+            || deal?.name
+            || `Deal ${key}`;
         const buyQty = deal?.buyQty ?? deal?.BuyQty ?? deal?.buyQuantity;
         const getQty = deal?.getQty ?? deal?.GetQty ?? deal?.getQuantity;
+        const discount = deal?.dealDiscount ?? deal?.DealDiscount ?? deal?.Discount;
         let subtitle;
         if (typeof buyQty === "number" || typeof getQty === "number") {
             const buyText = typeof buyQty === "number" ? buyQty : "?";
             const getText = typeof getQty === "number" ? getQty : "?";
             subtitle = `Deal: Buy ${buyText}, Get ${getText}`;
+            if (typeof discount === "number" && discount > 0) {
+                subtitle += ` @ ${discount}% off`;
+            }
         }
         entries.push({
             bucket: "deal",
@@ -73,6 +102,7 @@ export function flattenCartEntries(cart) {
             quantity,
             unitPrice,
             totalPrice: unitPrice * quantity,
+            type: deal?.typeLabel || deal?.Type || "DEAL",
             data: deal
         });
     }
