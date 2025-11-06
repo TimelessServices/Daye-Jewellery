@@ -1,3 +1,14 @@
+const resolveNumber = (...values) => {
+    for (const value of values) {
+        if (value === null || value === undefined) continue;
+        const parsed = typeof value === 'number' ? value : Number(value);
+        if (Number.isFinite(parsed)) {
+            return parsed;
+        }
+    }
+    return 0;
+};
+
 export function flattenCartEntries(cart) {
     if (!cart || typeof cart !== "object") {
         return [];
@@ -47,6 +58,7 @@ export function flattenCartEntries(cart) {
             quantity,
             unitPrice,
             totalPrice: unitPrice * quantity,
+            type: set?.typeLabel || set?.Type || "SET",
             data: set
         });
     }
@@ -87,6 +99,7 @@ export function flattenCartEntries(cart) {
             quantity,
             unitPrice,
             totalPrice: unitPrice * quantity,
+            type: deal?.typeLabel || deal?.Type || "DEAL",
             data: deal
         });
     }

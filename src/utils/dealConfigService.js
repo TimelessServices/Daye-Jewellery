@@ -19,6 +19,31 @@ function toNumber(value, fallback = 0) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function readFromStorage() {
+    const stored = storage.get();
+    if (stored?.success && stored.data) {
+        return stored.data;
+    }
+    return null;
+}
+
+function mapDealItems(source, fallbackPrefix) {
+    if (!source) {
+        return {};
+    }
+
+    if (typeof source === 'object' && !Array.isArray(source)) {
+        return Object.fromEntries(
+            Object.entries(source).map(([key, value]) => {
+                const itemKey = value?.itemKey ?? key;
+                return [itemKey, { ...value, itemKey }];
+            })
+        );
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 function mapDealItems(sources, fallbackPrefix) {
     const result = {};
     const sourceList = Array.isArray(sources) ? sources : [sources];
@@ -28,26 +53,13 @@ function mapDealItems(sources, fallbackPrefix) {
             return;
         }
 
-        if (typeof source === 'object' && !Array.isArray(source)) {
-            Object.entries(source).forEach(([key, value]) => {
-                const itemKey = value?.itemKey ?? key;
-                result[itemKey] = { ...value, itemKey };
-            });
-            return;
-        }
-
-        if (Array.isArray(source)) {
-            const offset = Object.keys(result).length;
-            source.forEach((value, index) => {
-                const itemKey = value?.itemKey
-                    ?? (value?.itemId
-                        ? `${value.itemId}_${value?.size ?? index}`
-                        : `${fallbackPrefix}-${offset + index}`);
-                result[itemKey] = { ...value, itemKey };
-            });
-        }
+    const list = Array.isArray(source) ? source : [];
+    const result = {};
+    list.forEach((value, index) => {
+        const itemKey = value?.itemKey
+            ?? (value?.itemId ? `${value.itemId}_${value?.size ?? index}` : `${fallbackPrefix}-${index}`);
+        result[itemKey] = { ...value, itemKey };
     });
-
     return result;
 }
 
@@ -65,10 +77,8 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
     const collectionId = String(collectionIdRaw);
     const name = fetchedDeal?.Name
         ?? fetchedDeal?.collectionName
-        ?? fetchedDeal?.name
         ?? existingDeal.collectionName
         ?? existingDeal.Name
-        ?? existingDeal.name
         ?? `Deal ${collectionId}`;
 
     const buyQty = toNumber(
@@ -116,18 +126,8 @@ function normalizeDealShape(existingDeal = {}, fetchedDeal = {}) {
 
     const quantity = typeof existingDeal.quantity === 'number' ? existingDeal.quantity : 1;
 
-    const buyItems = mapDealItems([
-        fetchedDeal?.BuyItems,
-        fetchedDeal?.buyItems,
-        existingDeal.buyItems,
-        existingDeal.BuyItems,
-    ], `${collectionId}-buy`);
-    const getItems = mapDealItems([
-        fetchedDeal?.GetItems,
-        fetchedDeal?.getItems,
-        existingDeal.getItems,
-        existingDeal.GetItems,
-    ], `${collectionId}-get`);
+    const buyItems = mapDealItems(existingDeal.buyItems ?? existingDeal.BuyItems, `${collectionId}-buy`);
+    const getItems = mapDealItems(existingDeal.getItems ?? existingDeal.GetItems, `${collectionId}-get`);
 
     const itemCount = fetchedDeal?.ItemCount
         ?? fetchedDeal?.itemCount
